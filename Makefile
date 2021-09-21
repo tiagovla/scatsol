@@ -11,6 +11,9 @@ clean:
 format: clean
 	@poetry run black scatsol/ tests/
 
+setup:
+	poetry run python setup.py build_ext --inplace
+
 test:
 	@poetry run pytest --cov=scatsol
 
