@@ -1,5 +1,7 @@
 import numpy as np
 from scipy.special import hankel2, jv
+import numpy.typing as npt
+import scipy.special
 
 
 def jv_prime(v: int, z: float) -> complex:
@@ -61,3 +63,22 @@ def generate_position(x1d: np.ndarray, y1d: np.ndarray, z1d: np.ndarray) -> np.n
     XX, YY, ZZ = np.meshgrid(x1d, y1d, z1d)
     x = np.stack((XX.ravel(), YY.ravel(), ZZ.ravel()), axis=1)
     return x
+
+
+def cart2spherical(xyz: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    rthetaphi = np.zeros(xyz.shape)
+    xy = xyz[:, 0] ** 2 + xyz[:, 1] ** 2
+    rthetaphi[:, 0] = np.sqrt(xy + xyz[:, 2] ** 2)
+    rthetaphi[:, 1] = np.arctan2(np.sqrt(xy), xyz[:, 2])
+    rthetaphi[:, 2] = np.arctan2(xyz[:, 1], xyz[:, 0])
+    return rthetaphi
+
+
+def lpmn(m: int, n: int, x: np.ndarray) -> tuple[npt.NDArray[np.float64], ...]:
+    p: npt.NDArray[np.float64] = np.zeros((n, x.shape[0]), dtype=np.float64)
+    dp: npt.NDArray[np.float64] = np.zeros_like(p)
+    for i in range(x.shape[0]):
+        u, du = scipy.special.lpmn(m, n, x[i])
+        p[:, i] = u[m, 1:]
+        dp[:, i] = du[m, 1:]
+    return p, dp
