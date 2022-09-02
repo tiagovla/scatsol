@@ -1,0 +1,140 @@
+import numpy as np
+import numpy.typing as npt
+from scatsol.material import Material, Medium
+from scipy.special import jv, h2vp, hankel2, jvp
+import scatsol.utils
+
+def c_n(k, a, eps_r, mu_r, n: int):
+    kd = np.sqrt(eps_r *mu_r) * k
+    mu_r, eps_r = mu_r, eps_r
+    num = 2 * np.sqrt(mu_r)
+    den_p1 = np.sqrt(mu_r) * h2vp(n, k * a) * jv(n, kd * a)
+    den_p2 = -np.sqrt(eps_r) * hankel2(n, k * a) * jvp(n, kd * a)
+    return (1j ** (-(n + 1))) / (np.pi * k * a) * (num) / (den_p1 + den_p2)
+
+def mie_cylindrical_scattered_field(
+    xyz: npt.NDArray[np.float64],
+    radius: float,
+    frequency: float,
+    background: Material,
+    cylinder: Material | None = None,
+    pol: str = "TM",
+    *,
+    n: int = 50,
+) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
+    Erpz = np.zeros_like(xyz, dtype=np.complex128)
+    Hrpz = np.zeros_like(xyz, dtype=np.complex128)
+
+    mask = (xyz[:, :2] ** 2).sum(axis=1) > radius**2
+
+    bg = Medium(background, frequency)
+    if cylinder == None:
+        if pol == "TM":
+            an = an_conducting_cylinder_tm(bg.k, radius, n)
+            Erpz[mask], Hrpz[mask] = calculate_scattered_field_outside(
+                xyz[mask], bg.k, bg.eta, an
+            )
+        else:
+            an = an_conducting_cylinder_tm(bg.k, radius, n)
+            Hrpz[mask], Erpz[mask] = calculate_scattered_field_outside(
+                xyz[mask], bg.k, 1 / bg.eta, an
+            )
+            Erpz[mask] = -Erpz[mask]
+    else:
+        c = Medium(cylinder, frequency)
+        if pol == "TM":
+            an, cn = an_cn_diel_cylinder_tm(bg.k, c.k, bg.eta, c.eta, radius, n)
+            kn = an_incident_cylinder(bg.k, radius, n)
+
+            Erpz[mask], Hrpz[mask] = calculate_scattered_field_outside(
+                xyz[mask], bg.k, bg.eta,  an
+            )
+            Erpz[~mask], Hrpz[~mask] = calculate_scattered_field_inside(
+                xyz[~mask], c.k, c.eta, cn 
+            )
+            Ei, Hi = calculate_scattered_field_inside(
+                xyz[~mask], bg.k, bg.eta,  kn
+            )
+            Erpz[~mask] -= Ei
+            Hrpz[~mask] -= Hi
+        else:
+            an, cn = an_cn_diel_cylinder_tm(bg.k, c.k, 1 / bg.eta, 1 / c.eta, radius, n)
+            Hrpz[mask], Erpz[mask] = calculate_scattered_field_outside(
+                xyz[mask], bg.k, 1 / bg.eta, an
+            )
+            Hrpz[~mask], Erpz[~mask] = calculate_scattered_field_inside(
+                xyz[~mask], c.k, 1 / c.eta, cn
+            )
+            Erpz[mask] = -Erpz[mask]
+
+    return Erpz, Hrpz
+
+
+def an_conducting_cylinder_tm(k: float, a: float, n: int) -> npt.NDArray[np.complex128]:
+    nn = np.arange(0, n)
+    return -(1j**-nn) * jv(nn, k * a) / hankel2(nn, k * a)
+
+
+def an_cn_diel_cylinder_tm(
+    k: float, kd: float, eta: float, etad: float, a: float, n: int
+) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
+    nn = np.arange(0, n)
+    den = eta * hankel2(nn, k * a) * jvp(nn, kd * a) - etad * h2vp(nn, k * a) * jv(
+        nn, kd * a
+    )
+    num = eta * jv(nn, k * a) * jvp(nn, kd * a) - etad * jvp(nn, k * a) * jv(nn, kd * a)
+    an = -(1j ** (-nn)) * num / den
+    cn = (etad * 2 * (1j ** (-nn + 1))) / (np.pi * k * a * den)
+
+    return an, cn
+
+def an_conducting_cylinder_te(k: float, a: float, n: int) -> npt.NDArray[np.complex128]:
+    nn = np.arange(0, n)
+    return -(1j**-nn) * jvp(nn, k * a) / h2vp(nn, k * a)
+
+
+def an_incident_cylinder(k: float, a: float, n: int) -> npt.NDArray[np.complex128]:
+    nn = np.arange(0, n)
+    return 1j**-nn
+
+
+def calculate_scattered_field_outside(
+    xyz: npt.NDArray[np.float64], k: float, eta: float, an: npt.NDArray[np.complex128]
+) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128],]:
+    nn = np.arange(0, an.shape[0])
+    eps = 1.0 + np.heaviside(nn - 0.5, 1)
+    rho, phi, _ = scatsol.utils.cart2cylindrical(xyz).T
+
+    e_field = np.zeros_like(xyz, dtype=np.complex128)
+    h_field = np.zeros_like(xyz, dtype=np.complex128)
+
+    besselterm = hankel2(nn[:, None], k * rho)
+    besselpterm = h2vp(nn[:, None], k * rho)
+    costerm = np.cos(nn[:, None] * phi)
+    sinterm = np.sin(nn[:, None] * phi)
+    e_field[:, 2] = an * eps @ (besselterm * costerm)
+    h_field[:, 0] = (nn * an * eps @ (besselterm * sinterm)) / (1j * k * eta * rho)
+    h_field[:, 1] = (k * an * eps @ (besselpterm * costerm)) / (1j * k * eta * rho)
+
+    return e_field, h_field
+
+
+def calculate_scattered_field_inside(
+    xyz: npt.NDArray[np.float64], k: float, eta: float, an: npt.NDArray[np.complex128]
+) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128],]:
+    nn = np.arange(0, an.shape[0])
+    eps = 1.0 + np.heaviside(nn - 0.5, 1)
+    rho, phi, _ = scatsol.utils.cart2cylindrical(xyz).T
+
+    e_field = np.zeros_like(xyz, dtype=np.complex128)
+    h_field = np.zeros_like(xyz, dtype=np.complex128)
+
+    besselterm = jv(nn[:, None], k * rho)
+    besselpterm = jvp(nn[:, None], k * rho)
+    costerm = np.cos(nn[:, None] * phi)
+    sinterm = np.sin(nn[:, None] * phi)
+    e_field[:, 2] = an * eps @ (besselterm * costerm)
+    h_field[:, 0] = (nn * an * eps @ (besselterm * sinterm)) / (1j * k * eta * rho)
+    h_field[:, 1] = (k * an * eps @ (besselpterm * costerm)) / (1j * k * eta * rho)
+
+    return e_field, h_field
