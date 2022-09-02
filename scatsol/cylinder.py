@@ -17,40 +17,41 @@ def mie_total_field(
     n: int = 50,
 ) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
     Erpz = np.zeros_like(xyz, dtype=np.complex128)
+
     Hrpz = np.zeros_like(xyz, dtype=np.complex128)
 
     mask = (xyz[:, :2] ** 2).sum(axis=1) > radius**2
 
     bg = Medium(background, frequency)
-    kn = an_inc(bg.k, radius, n)
+    kn = _an_inc(bg.k, radius, n)
     if cylinder == None:
         if pol == "TM":
-            Ei, Hi = calculate_field_in(xyz[mask], bg.k, bg.eta, kn)
-            an = an_cond_tm(bg.k, radius, n)
-            Erpz[mask], Hrpz[mask] = calculate_field_out(xyz[mask], bg.k, bg.eta, an)
+            Ei, Hi = _calculate_field_in(xyz[mask], bg.k, bg.eta, kn)
+            an = _an_cond_tm(bg.k, radius, n)
+            Erpz[mask], Hrpz[mask] = _calculate_field_out(xyz[mask], bg.k, bg.eta, an)
             Erpz[mask] += Ei
             Hrpz[mask] += Hi
         else:
-            Hi, Ei = calculate_field_in(xyz[mask], bg.k, 1 / bg.eta, kn)
-            an = an_cond_te(bg.k, radius, n)
-            Hrpz[mask], Erpz[mask] = calculate_field_out(xyz[mask], bg.k, 1 / bg.eta, an)
+            Hi, Ei = _calculate_field_in(xyz[mask], bg.k, 1 / bg.eta, kn)
+            an = _an_cond_te(bg.k, radius, n)
+            Hrpz[mask], Erpz[mask] = _calculate_field_out(xyz[mask], bg.k, 1 / bg.eta, an)
             Erpz[mask] += Ei
             Hrpz[mask] += Hi
             Erpz[mask] = -Erpz[mask]
     else:
         c = Medium(cylinder, frequency)
         if pol == "TM":
-            Ei, Hi = calculate_field_in(xyz[mask], bg.k, bg.eta, kn)
-            an, cn = an_cn_diel_tm(bg.k, c.k, bg.eta, c.eta, radius, n)
-            Erpz[mask], Hrpz[mask] = calculate_field_out(xyz[mask], bg.k, bg.eta, an)
-            Erpz[~mask], Hrpz[~mask] = calculate_field_in(xyz[~mask], c.k, c.eta, cn)
+            Ei, Hi = _calculate_field_in(xyz[mask], bg.k, bg.eta, kn)
+            an, cn = _an_cn_diel_tm(bg.k, c.k, bg.eta, c.eta, radius, n)
+            Erpz[mask], Hrpz[mask] = _calculate_field_out(xyz[mask], bg.k, bg.eta, an)
+            Erpz[~mask], Hrpz[~mask] = _calculate_field_in(xyz[~mask], c.k, c.eta, cn)
             Erpz[mask] += Ei
             Hrpz[mask] += Hi
         else:
-            Hi, Ei = calculate_field_in(xyz[mask], bg.k, 1 / bg.eta, kn)
-            an, cn = an_cn_diel_tm(bg.k, c.k, 1 / bg.eta, 1 / c.eta, radius, n)
-            Hrpz[mask], Erpz[mask] = calculate_field_out(xyz[mask], bg.k, 1 / bg.eta, an)
-            Hrpz[~mask], Erpz[~mask] = calculate_field_in(xyz[~mask], c.k, 1 / c.eta, cn)
+            Hi, Ei = _calculate_field_in(xyz[mask], bg.k, 1 / bg.eta, kn)
+            an, cn = _an_cn_diel_tm(bg.k, c.k, 1 / bg.eta, 1 / c.eta, radius, n)
+            Hrpz[mask], Erpz[mask] = _calculate_field_out(xyz[mask], bg.k, 1 / bg.eta, an)
+            Hrpz[~mask], Erpz[~mask] = _calculate_field_in(xyz[~mask], c.k, 1 / c.eta, cn)
             Erpz[mask] += Ei
             Hrpz[mask] += Hi
             Erpz[mask] = -Erpz[mask]
@@ -58,12 +59,12 @@ def mie_total_field(
     return Erpz, Hrpz
 
 
-def an_cond_tm(k: float, a: float, n: int) -> npt.NDArray[np.complex128]:
+def _an_cond_tm(k: float, a: float, n: int) -> npt.NDArray[np.complex128]:
     nn = np.arange(0, n)
     return -(1j**-nn) * jv(nn, k * a) / hankel2(nn, k * a)
 
 
-def an_cn_diel_tm(
+def _an_cn_diel_tm(
     k: float, kd: float, eta: float, etad: float, a: float, n: int
 ) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
     nn = np.arange(0, n)
@@ -75,17 +76,17 @@ def an_cn_diel_tm(
     return an, cn
 
 
-def an_cond_te(k: float, a: float, n: int) -> npt.NDArray[np.complex128]:
+def _an_cond_te(k: float, a: float, n: int) -> npt.NDArray[np.complex128]:
     nn = np.arange(0, n)
     return -(1j**-nn) * jvp(nn, k * a) / h2vp(nn, k * a)
 
 
-def an_inc(k: float, a: float, n: int) -> npt.NDArray[np.complex128]:
+def _an_inc(k: float, a: float, n: int) -> npt.NDArray[np.complex128]:
     nn = np.arange(0, n)
     return 1j**-nn
 
 
-def calculate_field_out(
+def _calculate_field_out(
     xyz: npt.NDArray[np.float64], k: float, eta: float, an: npt.NDArray[np.complex128]
 ) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
     nn = np.arange(0, an.shape[0])
@@ -106,7 +107,7 @@ def calculate_field_out(
     return e_field, h_field
 
 
-def calculate_field_in(
+def _calculate_field_in(
     xyz: npt.NDArray[np.float64], k: float, eta: float, an: npt.NDArray[np.complex128]
 ) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128],]:
     nn = np.arange(0, an.shape[0])
