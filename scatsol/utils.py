@@ -1,68 +1,18 @@
 import numpy as np
-from scipy.special import hankel2, jv
 import numpy.typing as npt
 import scipy.special
 
 
-def jv_prime(v: int, z: float) -> complex:
-    """First derivative of the jv function.
-
-    Parameters
-    ----------
-    v : int
-        Order of the function.
-    z : float
-        Argument of the function.
-
-    Returns
-    -------
-    complex :
-        Evaluated function.
-
-    """
-    return 0.5 * (jv(v - 1, z) - jv(v + 1, z))
-
-
-def hankel2_prime(v: int, z: float) -> complex:
-    """First derivative of the hankel2 function.
-
-    Parameters
-    ----------
-    v : int
-        Order of the function.
-    z : float
-        Argument of the function.
-
-    Returns
-    -------
-    complex :
-        Evaluated function.
-
-    """
-    return 0.5 * (hankel2(v - 1, z) - hankel2(v + 1, z))
-
-
-def generate_position(x1d: np.ndarray, y1d: np.ndarray, z1d: np.ndarray) -> np.ndarray:
-    """Generates the position array based on 3 1d arrays.
-
-    Parameters
-    ----------
-    x1d : np.ndarray
-        1d array in the x direction.
-    y1d : np.ndarray
-        1d array in the y direction.
-    z1d : np.ndarray
-        1d array in the z direction.
-
-    Returns
-    -------
-    np.ndarray:
-        Position array [Nx3].
-
-    """
-    XX, YY, ZZ = np.meshgrid(x1d, y1d, z1d)
-    x = np.stack((XX.ravel(), YY.ravel(), ZZ.ravel()), axis=1)
-    return x
+def field_cyl2cart(
+    field_rtz: npt.NDArray[np.complex128], xyz: npt.NDArray[np.float64]
+) -> npt.NDArray[np.complex128]:
+    theta = np.arctan2(xyz[:, 1], xyz[:, 0])
+    theta_cos, theta_sin = np.cos(theta), np.sin(theta)
+    field_xyz = np.zeros_like(field_rtz)
+    field_xyz[:, 0] = field_rtz[:, 0] * theta_cos - field_rtz[:, 1] * theta_sin
+    field_xyz[:, 1] = field_rtz[:, 0] * theta_sin + field_rtz[:, 1] * theta_cos
+    field_xyz[:, 2] = field_rtz[:, 2]
+    return field_xyz
 
 
 def cart2spherical(xyz: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
@@ -72,6 +22,14 @@ def cart2spherical(xyz: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     rthetaphi[:, 1] = np.arctan2(np.sqrt(xy), xyz[:, 2])
     rthetaphi[:, 2] = np.arctan2(xyz[:, 1], xyz[:, 0])
     return rthetaphi
+
+
+def cart2cylindrical(xyz: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    rphiz = np.zeros(xyz.shape)
+    rphiz[:, 0] = np.sqrt(xyz[:, 0] ** 2 + xyz[:, 1] ** 2)
+    rphiz[:, 1] = np.arctan2(xyz[:, 1], xyz[:, 0])
+    rphiz[:, 2] = xyz[:, 2]
+    return rphiz
 
 
 def lpmn(m: int, n: int, x: np.ndarray) -> tuple[npt.NDArray[np.float64], ...]:
