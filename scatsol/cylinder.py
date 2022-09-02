@@ -22,17 +22,23 @@ def mie_total_field(
     mask = (xyz[:, :2] ** 2).sum(axis=1) > radius**2
 
     bg = Medium(background, frequency)
+    kn = an_inc(bg.k, radius, n)
     if cylinder == None:
         if pol == "TM":
+            Ei, Hi = calculate_field_in(xyz[mask], bg.k, bg.eta, kn)
             an = an_cond_tm(bg.k, radius, n)
             Erpz[mask], Hrpz[mask] = calculate_field_out(xyz[mask], bg.k, bg.eta, an)
+            Erpz[mask] += Ei
+            Hrpz[mask] += Hi
         else:
-            an = an_cond_tm(bg.k, radius, n)
+            Hi, Ei = calculate_field_in(xyz[mask], bg.k, 1 / bg.eta, kn)
+            an = an_cond_te(bg.k, radius, n)
             Hrpz[mask], Erpz[mask] = calculate_field_out(xyz[mask], bg.k, 1 / bg.eta, an)
+            Erpz[mask] += Ei
+            Hrpz[mask] += Hi
             Erpz[mask] = -Erpz[mask]
     else:
         c = Medium(cylinder, frequency)
-        kn = an_incident_cylinder(bg.k, radius, n)
         if pol == "TM":
             Ei, Hi = calculate_field_in(xyz[mask], bg.k, bg.eta, kn)
             an, cn = an_cn_diel_tm(bg.k, c.k, bg.eta, c.eta, radius, n)
@@ -69,12 +75,12 @@ def an_cn_diel_tm(
     return an, cn
 
 
-def an_conducting_cylinder_te(k: float, a: float, n: int) -> npt.NDArray[np.complex128]:
+def an_cond_te(k: float, a: float, n: int) -> npt.NDArray[np.complex128]:
     nn = np.arange(0, n)
     return -(1j**-nn) * jvp(nn, k * a) / h2vp(nn, k * a)
 
 
-def an_incident_cylinder(k: float, a: float, n: int) -> npt.NDArray[np.complex128]:
+def an_inc(k: float, a: float, n: int) -> npt.NDArray[np.complex128]:
     nn = np.arange(0, n)
     return 1j**-nn
 
