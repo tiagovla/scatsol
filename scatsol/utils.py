@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 import scipy.special
+from scipy.special import spherical_jn as sjn, spherical_yn as syn
 
 
 def field_cyl2cart(field_rtz: npt.NDArray[np.complex128], xyz: npt.NDArray[np.float64]) -> npt.NDArray[np.complex128]:
@@ -49,3 +50,19 @@ def lpmn(m: int, n: int, x: np.ndarray) -> tuple[npt.NDArray[np.float64], ...]:
         p[:, i] = u[m, 1:]
         dp[:, i] = du[m, 1:]
     return p, dp
+
+
+def ric_jn(n, z):
+    return z * sjn(n, z)
+
+
+def ric_jnp(n, z):
+    return sjn(n, z) + z * sjn(n, z, derivative=True)
+
+
+def ric_h2n(n, z):
+    return z * (sjn(n, z) - 1j * syn(n, z))
+
+
+def ric_h2np(n, z):
+    return sjn(n, z) - 1j * syn(n, z) + z * (sjn(n, z, derivative=True) - 1j * syn(n, z, derivative=True))
