@@ -3,15 +3,24 @@ import numpy.typing as npt
 import scipy.special
 
 
-def field_cyl2cart(
-    field_rtz: npt.NDArray[np.complex128], xyz: npt.NDArray[np.float64]
-) -> npt.NDArray[np.complex128]:
+def field_cyl2cart(field_rtz: npt.NDArray[np.complex128], xyz: npt.NDArray[np.float64]) -> npt.NDArray[np.complex128]:
     theta = np.arctan2(xyz[:, 1], xyz[:, 0])
-    theta_cos, theta_sin = np.cos(theta), np.sin(theta)
+    t_cos, t_sin = np.cos(theta), np.sin(theta)
     field_xyz = np.zeros_like(field_rtz)
-    field_xyz[:, 0] = field_rtz[:, 0] * theta_cos - field_rtz[:, 1] * theta_sin
-    field_xyz[:, 1] = field_rtz[:, 0] * theta_sin + field_rtz[:, 1] * theta_cos
+    field_xyz[:, 0] = field_rtz[:, 0] * t_cos - field_rtz[:, 1] * t_sin
+    field_xyz[:, 1] = field_rtz[:, 0] * t_sin + field_rtz[:, 1] * t_cos
     field_xyz[:, 2] = field_rtz[:, 2]
+    return field_xyz
+
+
+def field_sph2cart(field_rtz: npt.NDArray[np.complex128], xyz: npt.NDArray[np.float64]) -> npt.NDArray[np.complex128]:
+    _, theta, phi = cart2spherical(xyz).T
+    t_cos, t_sin = np.cos(theta), np.sin(theta)
+    p_cos, p_sin = np.cos(phi), np.sin(phi)
+    field_xyz = np.empty_like(field_rtz)
+    field_xyz[:, 0] = field_rtz[:, 0] * t_sin * p_cos + field_rtz[:, 1] * t_cos * p_cos - field_rtz[:, 2] * p_sin
+    field_xyz[:, 1] = field_rtz[:, 0] * t_sin * p_sin + field_rtz[:, 1] * t_cos * p_sin + field_rtz[:, 2] * p_cos
+    field_xyz[:, 2] = field_rtz[:, 0] * t_cos - field_rtz[:, 1] * t_sin
     return field_xyz
 
 
