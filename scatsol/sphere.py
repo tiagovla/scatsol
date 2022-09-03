@@ -5,7 +5,30 @@ from scatsol.material import Material, Medium
 import scatsol.utils
 
 
-def mie_spherical_scattered_field(
+def mie_incident_field(
+    xyz: npt.NDArray[np.float64],
+    frequency: float,
+    background: Material,
+    *,
+    n: int = 50,
+) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
+    Ertp = np.zeros_like(xyz, dtype=np.complex128)
+    Hrtp = np.zeros_like(xyz, dtype=np.complex128)
+    r, theta, phi = scatsol.utils.cart2spherical(xyz).T
+    bg = Medium(background, frequency)
+    t_cos, t_sin = np.cos(theta), np.sin(theta)
+    p_cos, p_sin = np.cos(phi), np.sin(phi)
+    exp = np.exp(-1j * bg.k * r * np.cos(theta))
+    Ertp[:, 0] = t_sin * p_cos * exp
+    Ertp[:, 1] = t_cos * p_cos * exp
+    Ertp[:, 2] = -p_sin * exp
+    Hrtp[:, 0] = t_sin * p_sin * exp / bg.eta
+    Hrtp[:, 1] = t_cos * p_sin * exp / bg.eta
+    Hrtp[:, 2] = p_cos * exp / bg.eta
+    return Ertp, Hrtp
+
+
+def mie_total_field(
     xyz: npt.NDArray[np.float64],
     radius: float,
     frequency: float,
@@ -21,31 +44,40 @@ def mie_spherical_scattered_field(
 
     bg = Medium(background, frequency)
     if sphere == None:
-        an, bn = an_bn_conducting_sphere(bg.k, radius, n)
-        Ertp[mask], Hrtp[mask] = calculate_scattered_field_outside(xyz[mask], bg.k, bg.eta, an, bn)
+        an, bn = _an_bn_cond(bg.k, radius, n)
+        Ertp[mask], Hrtp[mask] = _calculate_field_out(xyz[mask], bg.k, bg.eta, an, bn)
     else:
         s = Medium(sphere, frequency)
-        an, bn, cn, dn = an_bn_cn_dn_dielectric_sphere(bg.k, sphere.epsilon_r, sphere.mu_r, radius, n)
-        Ertp[mask], Hrtp[mask] = calculate_scattered_field_outside(xyz[mask], bg.k, bg.eta, an, bn)
-        Ertp[~mask], Hrtp[~mask] = calculate_scattered_field_inside(xyz[~mask], s.k, s.eta, cn, dn)
+        an, bn, cn, dn = _an_bn_cn_dn_diel(bg.k, sphere.epsilon_r, sphere.mu_r, radius, n)
+        Ertp[mask], Hrtp[mask] = _calculate_field_out(xyz[mask], bg.k, bg.eta, an, bn)
+        Ertp[~mask], Hrtp[~mask] = _calculate_field_in(xyz[~mask], s.k, s.eta, cn, dn)
+    Ei, Hi = mie_incident_field(xyz[mask], frequency, background, n=n)
+    Ertp[mask] += Ei
+    Hrtp[mask] += Hi
     return Ertp, Hrtp
 
 
-def an_bn_conducting_sphere(k: float, a: float, n: int) -> tuple[np.ndarray, np.ndarray]:
+def _an_bn_cond(k: float, a: float, n: int) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
     nn = np.arange(1, n + 1)
     scale_term = (2 * nn + 1) / (nn * (nn + 1))
-    sbessel_first = sjn(nn, k * a)
-    sbessel_second = syn(nn, k * a)
-    sbessel_first_prime = sjn(nn, k * a, derivative=True)
-    sbessel_second_prime = syn(nn, k * a, derivative=True)
-    bn = -(1j**-nn) * scale_term * sbessel_first / (sbessel_first - 1j * sbessel_second)
-    an_num = sbessel_first + k * a * sbessel_first_prime
-    an_den = an_num - 1j * (sbessel_second + k * a * sbessel_second_prime)
+    sj = sjn(nn, k * a)
+    sy = syn(nn, k * a)
+    sjp = sjn(nn, k * a, derivative=True)
+    syp = syn(nn, k * a, derivative=True)
+    bn = -(1j**-nn) * scale_term * sj / (sj - 1j * sy)
+    an_num = sj + k * a * sjp
+    an_den = an_num - 1j * (sy + k * a * syp)
     an = -(1j**-nn) * scale_term * an_num / an_den
     return an, bn
 
 
-def an_bn_cn_dn_dielectric_sphere(
+def _an_bn_inc(k: float, a: float, n: int) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
+    nn = np.arange(1, n + 1)
+    an = (1j ** (-n)) * (2 * nn + 1) / (nn * (nn + 1))
+    return an, an
+
+
+def _an_bn_cn_dn_diel(
     k_0: float, eps_r: float, mu_r: float, a: float, n: int
 ) -> tuple[
     npt.NDArray[np.complex128],
@@ -91,18 +123,7 @@ def an_bn_cn_dn_dielectric_sphere(
     return an, bn, cn, dn
 
 
-def calculate_incident_field(xyz, k, n) -> tuple[npt.NDArray[np.complex128], ...]:
-    r, theta, _ = scatsol.utils.cart2spherical(xyz).T
-    nn = np.arange(1, n + 1)
-    sbessel_first = sjn(nn[:, np.newaxis], k * r)
-    theta_cos = np.cos(theta)
-    p, _ = scatsol.utils.lpmn(0, n, theta_cos)
-    e_field = 1j ** (-nn) * (2 * nn + 1) @ (sbessel_first * p)
-
-    return e_field, e_field  # TODO: calculate H field and convert to spherical
-
-
-def calculate_scattered_field_outside(xyz, k, eta, an, bn) -> tuple[npt.NDArray[np.complex128], ...]:
+def _calculate_field_out(xyz, k, eta, an, bn) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
     r, theta, phi = scatsol.utils.cart2spherical(xyz).T
     nn = np.arange(1, an.shape[0] + 1)
 
@@ -145,7 +166,7 @@ def calculate_scattered_field_outside(xyz, k, eta, an, bn) -> tuple[npt.NDArray[
     return e_field, h_field
 
 
-def calculate_scattered_field_inside(xyz, k, eta, cn, dn) -> tuple[npt.NDArray[np.complex128], ...]:
+def _calculate_field_in(xyz, k, eta, cn, dn) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
     r, theta, phi = scatsol.utils.cart2spherical(xyz).T
     nn = np.arange(1, cn.shape[0] + 1)
 

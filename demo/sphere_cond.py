@@ -1,12 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import scatsol.sphere
 
 from scatsol import Material
+import scatsol.sphere
+import scatsol.utils
 
 
 def main() -> None:
-    radius = 1.0
+    radius = 1.0 # 1m
     frequency = 300e6  # 300MHz
     vacuum = Material(epsilon_r=1, mu_r=1)
 
@@ -14,17 +15,18 @@ def main() -> None:
     x, z = np.meshgrid(interval, interval)
     xyz = np.stack((x.ravel(), 0 * x.ravel(), z.ravel()), axis=1)
 
-    _, Hrtp = scatsol.sphere.mie_spherical_scattered_field(
+    _, H = scatsol.sphere.mie_total_field(
         xyz, radius, frequency, vacuum, n=50
     )
+    H = scatsol.utils.field_sph2cart(H, xyz)
 
-    fig, ax = plt.subplots(constrained_layout=True)
+    fig, ax = plt.subplots(constrained_layout=True, figsize=(5, 4))
     h = ax.tripcolor(
         *xyz[:, np.array([0, 2])].T,
-        vacuum.eta * Hrtp[:, 2].real,
+        vacuum.eta * H[:, 1].real,
         shading="gouraud",
-        vmin=-1,
-        vmax=1,
+        vmin=-2,
+        vmax=2,
     )
     fig.colorbar(h, ax=ax)
     ax.plot(
@@ -35,7 +37,7 @@ def main() -> None:
     )
     ax.set(xlabel="$x$", ylabel="$z$")
     ax.margins(0)
-    ax.set_title(r"$\eta_0 H_\phi$")
+    ax.set_title(r"$\eta_0 H_y$")
 
 
 if __name__ == "__main__":
