@@ -7,7 +7,7 @@ from scatsol.material import Material, Medium
 import scatsol.utils
 
 
-def mie_inc_field(
+def mie_incident_field(
     xyz: npt.NDArray[np.float64],
     radius: float,
     frequency: float,
@@ -62,7 +62,7 @@ def mie_total_field(
             Hrpz[~mask], Erpz[~mask] = _calculate_field(xyz[~mask], c.k, 1 / c.eta, cn, jv, jvp)
             Erpz[mask] = -Erpz[mask]
 
-    Ei, Hi = mie_inc_field(xyz[mask], radius, frequency, background, pol, n=n)
+    Ei, Hi = mie_incident_field(xyz[mask], radius, frequency, background, pol, n=n)
     Erpz[mask] += Ei
     Hrpz[mask] += Hi
 
