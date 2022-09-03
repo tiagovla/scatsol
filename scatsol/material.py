@@ -34,12 +34,7 @@ class Medium:
 
     @property
     def k(self) -> float:
-        return (
-            2.0
-            * np.pi
-            * self.frequency
-            * np.sqrt(self.material.epsilon * self.material.mu)
-        )
+        return 2.0 * np.pi * self.frequency * np.sqrt(self.material.epsilon * self.material.mu)
 
     @property
     def eta(self) -> float:

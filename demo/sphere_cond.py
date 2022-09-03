@@ -7,7 +7,7 @@ import scatsol.utils
 
 
 def main() -> None:
-    radius = 1.0 # 1m
+    radius = 1.0  # 1m
     frequency = 300e6  # 300MHz
     vacuum = Material(epsilon_r=1, mu_r=1)
 
@@ -15,9 +15,7 @@ def main() -> None:
     x, z = np.meshgrid(interval, interval)
     xyz = np.stack((x.ravel(), 0 * x.ravel(), z.ravel()), axis=1)
 
-    _, H = scatsol.sphere.mie_total_field(
-        xyz, radius, frequency, vacuum, n=50
-    )
+    _, H = scatsol.sphere.mie_total_field(xyz, radius, frequency, vacuum, n=50)
     H = scatsol.utils.field_sph2cart(H, xyz)
 
     fig, ax = plt.subplots(constrained_layout=True, figsize=(5, 4))

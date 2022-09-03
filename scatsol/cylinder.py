@@ -42,7 +42,7 @@ def mie_total_field(
     mask = (xyz[:, :2] ** 2).sum(axis=1) > radius**2
 
     bg = Medium(background, frequency)
-    if cylinder == None: # if PEC cylinder
+    if cylinder == None:  # if PEC cylinder
         if pol == "TM":
             an = _an_cond_tm(bg.k, radius, n)
             Erpz[mask], Hrpz[mask] = _calculate_field(xyz[mask], bg.k, bg.eta, an, hankel2, h2vp)
@@ -50,7 +50,7 @@ def mie_total_field(
             an = _an_cond_te(bg.k, radius, n)
             Hrpz[mask], Erpz[mask] = _calculate_field(xyz[mask], bg.k, 1 / bg.eta, an, hankel2, h2vp)
             Erpz[mask] = -Erpz[mask]
-    else: # else diel cylinder
+    else:  # else diel cylinder
         c = Medium(cylinder, frequency)
         if pol == "TM":
             an, cn = _an_cn_diel_tm(bg.k, c.k, bg.eta, c.eta, radius, n)
