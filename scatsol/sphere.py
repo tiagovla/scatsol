@@ -14,7 +14,7 @@ def mie_incident_field(
 ) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
     Ertp = np.zeros_like(xyz, dtype=np.complex128)
     Hrtp = np.zeros_like(xyz, dtype=np.complex128)
-    r, theta, phi = scatsol.utils.cart2spherical(xyz).T
+    r, theta, phi = scatsol.utils.cart2sph(xyz).T
     bg = Medium(background, frequency)
     t_cos, t_sin = np.cos(theta), np.sin(theta)
     p_cos, p_sin = np.cos(phi), np.sin(phi)
@@ -45,19 +45,29 @@ def mie_total_field(
     bg = Medium(background, frequency)
     if sphere == None:
         an, bn = _an_bn_cond(bg.k, radius, n)
-        Ertp[mask], Hrtp[mask] = _calculate_field(xyz[mask], bg.k, bg.eta, an, bn, ric_h2n, ric_h2np)
+        Ertp[mask], Hrtp[mask] = _calculate_field(
+            xyz[mask], bg.k, bg.eta, an, bn, ric_h2n, ric_h2np
+        )
     else:
         s = Medium(sphere, frequency)
-        an, bn, cn, dn = _an_bn_cn_dn_diel(bg.k, sphere.epsilon_r, sphere.mu_r, radius, n)
-        Ertp[mask], Hrtp[mask] = _calculate_field(xyz[mask], bg.k, bg.eta, an, bn, ric_h2n, ric_h2np)
-        Ertp[~mask], Hrtp[~mask] = _calculate_field(xyz[~mask], s.k, s.eta, cn, dn, ric_jn, ric_jnp)
+        an, bn, cn, dn = _an_bn_cn_dn_diel(
+            bg.k, sphere.epsilon_r, sphere.mu_r, radius, n
+        )
+        Ertp[mask], Hrtp[mask] = _calculate_field(
+            xyz[mask], bg.k, bg.eta, an, bn, ric_h2n, ric_h2np
+        )
+        Ertp[~mask], Hrtp[~mask] = _calculate_field(
+            xyz[~mask], s.k, s.eta, cn, dn, ric_jn, ric_jnp
+        )
     Ei, Hi = mie_incident_field(xyz[mask], frequency, background)
     Ertp[mask] += Ei
     Hrtp[mask] += Hi
     return Ertp, Hrtp
 
 
-def _an_bn_cond(k: float, a: float, n: int) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
+def _an_bn_cond(
+    k: float | complex, a: float, n: int
+) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
     nn = np.arange(1, n + 1)
     scale_term = (2 * nn + 1) / (nn * (nn + 1))
     sj = sjn(nn, k * a)
@@ -72,7 +82,11 @@ def _an_bn_cond(k: float, a: float, n: int) -> tuple[npt.NDArray[np.complex128],
 
 
 def _an_bn_cn_dn_diel(
-    k_0: float, eps_r: float, mu_r: float, a: float, n: int
+    k_0: float | complex,
+    eps_r: float | complex,
+    mu_r: float | complex,
+    a: float,
+    n: int,
 ) -> tuple[
     npt.NDArray[np.complex128],
     npt.NDArray[np.complex128],
@@ -84,12 +98,12 @@ def _an_bn_cn_dn_diel(
     k_d = np.sqrt(eps_r * mu_r) * k_0
     scale_term = (2 * nn + 1) / (nn * (nn + 1))
 
-    den1 = np.sqrt(mu_r) * ric_h2n(nn, k_0 * a) * ric_jnp(nn, k_d * a) - np.sqrt(eps_r) * ric_h2np(
-        nn, k_0 * a
-    ) * ric_jn(nn, k_d * a)
-    den2 = np.sqrt(eps_r) * ric_h2n(nn, k_0 * a) * ric_jnp(nn, k_d * a) - np.sqrt(mu_r) * ric_h2np(
-        nn, k_0 * a
-    ) * ric_jn(nn, k_d * a)
+    den1 = np.sqrt(mu_r) * ric_h2n(nn, k_0 * a) * ric_jnp(
+        nn, k_d * a
+    ) - np.sqrt(eps_r) * ric_h2np(nn, k_0 * a) * ric_jn(nn, k_d * a)
+    den2 = np.sqrt(eps_r) * ric_h2n(nn, k_0 * a) * ric_jnp(
+        nn, k_d * a
+    ) - np.sqrt(mu_r) * ric_h2np(nn, k_0 * a) * ric_jn(nn, k_d * a)
 
     an = (
         (1j**-nn)
@@ -117,14 +131,14 @@ def _an_bn_cn_dn_diel(
 
 def _calculate_field(
     xyz: npt.NDArray[np.float64],
-    k: float,
-    eta: float,
+    k: float | complex,
+    eta: float | complex,
     cn: npt.NDArray[np.complex128],
     dn: npt.NDArray[np.complex128],
     fn: Callable,
     dfn: Callable,
 ) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
-    r, theta, phi = scatsol.utils.cart2spherical(xyz).T
+    r, theta, phi = scatsol.utils.cart2sph(xyz).T
     nn = np.arange(1, cn.shape[0] + 1)
     theta_cos, phi_cos, phi_sin = np.cos(theta), np.cos(phi), np.sin(phi)
 
@@ -137,23 +151,59 @@ def _calculate_field(
     p_theta_sin[0] = -1
     p_theta_sin[1] = -3 * theta_cos
     for n in range(2, p_theta_sin.shape[0] - 1):
-        p_theta_sin[n] = (2 * n + 1) / n * theta_cos * p_theta_sin[n - 1] - (n + 1) / n * p_theta_sin[n - 2]
+        p_theta_sin[n] = (2 * n + 1) / n * theta_cos * p_theta_sin[n - 1] - (
+            n + 1
+        ) / n * p_theta_sin[n - 2]
 
     dp_theta_sin = np.zeros_like(p)
     dp_theta_sin[0] = theta_cos
     for n in range(2, dp_theta_sin.shape[0]):
-        dp_theta_sin[n - 1] = (n + 1) * p_theta_sin[n - 2] - n * np.cos(theta) * p_theta_sin[n - 1]
+        dp_theta_sin[n - 1] = (n + 1) * p_theta_sin[n - 2] - n * np.cos(
+            theta
+        ) * p_theta_sin[n - 1]
     dp_theta_sin = -dp_theta_sin
 
     e_field = np.empty((xyz.shape[0], 3), dtype=np.complex128)
-    e_field[:, 0] = ((phi_cos) / (1j * (k * r) ** 2)) * (cn * nn * (nn + 1) @ (rbesselterm * p))
-    e_field[:, 1] = -(phi_cos) / (k * r) * (1j * cn @ (rbesselpterm * dp_theta_sin) + dn @ (rbesselterm * p_theta_sin))
-    e_field[:, 2] = +(phi_sin) / (k * r) * (1j * cn @ (rbesselpterm * p_theta_sin) + dn @ (rbesselterm * dp_theta_sin))
+    e_field[:, 0] = ((phi_cos) / (1j * (k * r) ** 2)) * (
+        cn * nn * (nn + 1) @ (rbesselterm * p)
+    )
+    e_field[:, 1] = (
+        -(phi_cos)
+        / (k * r)
+        * (
+            1j * cn @ (rbesselpterm * dp_theta_sin)
+            + dn @ (rbesselterm * p_theta_sin)
+        )
+    )
+    e_field[:, 2] = (
+        +(phi_sin)
+        / (k * r)
+        * (
+            1j * cn @ (rbesselpterm * p_theta_sin)
+            + dn @ (rbesselterm * dp_theta_sin)
+        )
+    )
 
     h_field = np.empty((xyz.shape[0], 3), dtype=np.complex128)
-    h_field[:, 0] = ((phi_sin) / (1j * (k * r) ** 2)) * (dn * nn * (nn + 1) @ (rbesselterm * p))
-    h_field[:, 1] = -(phi_sin) / (k * r) * (1j * dn @ (rbesselpterm * dp_theta_sin) + cn @ (rbesselterm * p_theta_sin))
-    h_field[:, 2] = -(phi_cos) / (k * r) * (1j * dn @ (rbesselpterm * p_theta_sin) + cn @ (rbesselterm * dp_theta_sin))
+    h_field[:, 0] = ((phi_sin) / (1j * (k * r) ** 2)) * (
+        dn * nn * (nn + 1) @ (rbesselterm * p)
+    )
+    h_field[:, 1] = (
+        -(phi_sin)
+        / (k * r)
+        * (
+            1j * dn @ (rbesselpterm * dp_theta_sin)
+            + cn @ (rbesselterm * p_theta_sin)
+        )
+    )
+    h_field[:, 2] = (
+        -(phi_cos)
+        / (k * r)
+        * (
+            1j * dn @ (rbesselpterm * p_theta_sin)
+            + cn @ (rbesselterm * dp_theta_sin)
+        )
+    )
     h_field = h_field / eta
 
     return e_field, h_field

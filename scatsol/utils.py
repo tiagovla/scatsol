@@ -15,7 +15,7 @@ def field_cyl2cart(field_rtz: npt.NDArray[np.complex128], xyz: npt.NDArray[np.fl
 
 
 def field_sph2cart(field_rtz: npt.NDArray[np.complex128], xyz: npt.NDArray[np.float64]) -> npt.NDArray[np.complex128]:
-    _, theta, phi = cart2spherical(xyz).T
+    _, theta, phi = cart2sph(xyz).T
     t_cos, t_sin = np.cos(theta), np.sin(theta)
     p_cos, p_sin = np.cos(phi), np.sin(phi)
     field_xyz = np.empty_like(field_rtz)
@@ -25,7 +25,7 @@ def field_sph2cart(field_rtz: npt.NDArray[np.complex128], xyz: npt.NDArray[np.fl
     return field_xyz
 
 
-def cart2spherical(xyz: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+def cart2sph(xyz: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     rthetaphi = np.zeros(xyz.shape)
     xy = xyz[:, 0] ** 2 + xyz[:, 1] ** 2
     rthetaphi[:, 0] = np.sqrt(xy + xyz[:, 2] ** 2)
@@ -34,7 +34,7 @@ def cart2spherical(xyz: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     return rthetaphi
 
 
-def cart2cylindrical(xyz: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+def cart2cyl(xyz: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     rphiz = np.zeros(xyz.shape)
     rphiz[:, 0] = np.sqrt(xyz[:, 0] ** 2 + xyz[:, 1] ** 2)
     rphiz[:, 1] = np.arctan2(xyz[:, 1], xyz[:, 0])
