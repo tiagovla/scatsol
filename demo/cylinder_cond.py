@@ -1,14 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from scatsol import Material
-import scatsol.cylinder
+import scatsol
 
 
 def main() -> None:
     radius = 1.0
     frequency = 300e6  # 300MHz
-    vacuum = Material(epsilon_r=1.0, mu_r=1.0)
+    vacuum = scatsol.Material(epsilon_r=1.0, mu_r=1.0)
 
     interval = np.linspace(-5.0, 5.0, 100)
     x, y = np.meshgrid(interval, interval)
