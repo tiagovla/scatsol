@@ -4,9 +4,7 @@ import numpy as np
 
 
 class Material:
-    def __init__(
-        self, epsilon_r: float | complex = 1.0, mu_r: float | complex = 1.0
-    ) -> None:
+    def __init__(self, epsilon_r: float | complex = 1.0, mu_r: float | complex = 1.0) -> None:
         """Representation of a material with electromagnetic properties.
 
         Args:
@@ -63,12 +61,7 @@ class Medium:
 
     @property
     def k(self) -> float | complex:
-        return (
-            2.0
-            * np.pi
-            * self.frequency
-            * np.sqrt(self.material.epsilon * self.material.mu)
-        )
+        return 2.0 * np.pi * self.frequency * np.sqrt(self.material.epsilon * self.material.mu)
 
     @property
     def eta(self) -> float | complex:
