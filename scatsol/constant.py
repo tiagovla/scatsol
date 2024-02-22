@@ -1,6 +1,7 @@
 import numpy as np
+from enum import Enum
 
-PI = np.pi
+PI: float = np.pi
 """Pi constant."""
 
 FREE_SPACE_PERMITTIVITY: float = 8.85418782e-12
@@ -11,3 +12,8 @@ FREE_SPACE_PERMEABILITY: float = 4 * PI * 1e-7
 
 FREE_SPACE_LIGHT_SPEED: float = 299792458.0
 """Speed of light in free space [m/s]."""
+
+
+class Polarization(Enum):
+    TM = "TM"
+    TE = "TE"

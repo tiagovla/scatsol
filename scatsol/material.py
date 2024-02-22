@@ -46,37 +46,3 @@ class Material:
 
     def __rep__(self) -> str:
         return self.__str__()
-
-
-class Medium:
-    def __init__(self, material: Material, frequency: float = 300e6) -> None:
-        """Representation of a electromagnetic media.
-
-        Args:
-            material (Material): material object.
-            frequency (float): frequency in Hz.
-        """
-        self.material = material
-        self.frequency = frequency
-
-    @property
-    def k(self) -> float | complex:
-        return 2.0 * np.pi * self.frequency * np.sqrt(self.material.epsilon * self.material.mu)
-
-    @property
-    def eta(self) -> float | complex:
-        """Calculate the material's electromagnetic impedance.
-
-        Returns:
-            eta: electromagnetic impedance.
-        """
-        return self.material.eta
-
-    @property
-    def omega(self) -> float:
-        """Frequency in rads/s.
-
-        Returns:
-            omega: angular frequency.
-        """
-        return 2 * np.pi * self.frequency
