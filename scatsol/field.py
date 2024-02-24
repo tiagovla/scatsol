@@ -1,9 +1,9 @@
 import numpy as np
-from numpy.typing import ArrayLike
+import numpy.typing as npt
 
 
 class Field:
-    def __init__(self, field: np.ndarray):
+    def __init__(self, field: npt.NDArray[np.complex128]):
         self.field = field
 
     def x(self):
@@ -16,13 +16,23 @@ class Field:
         return self.field[:, 2]
 
     @classmethod
-    def from_cylindrical(cls, rho: ArrayLike, phi: ArrayLike, z: ArrayLike):
+    def from_cylindrical(
+        cls,
+        rho: npt.NDArray[np.complex128],
+        phi: npt.NDArray[np.complex128],
+        z: npt.NDArray[np.complex128],
+    ):
         x = rho * np.cos(phi)
         y = rho * np.sin(phi)
         return cls(np.array([x, y, z]).T)
 
     @classmethod
-    def from_spherical(cls, r: ArrayLike, theta: ArrayLike, phi: ArrayLike):
+    def from_spherical(
+        cls,
+        r: npt.NDArray[np.complex128],
+        theta: npt.NDArray[np.complex128],
+        phi: npt.NDArray[np.complex128],
+    ):
         x = r * np.sin(theta) * np.cos(phi)
         y = r * np.sin(theta) * np.sin(phi)
         z = r * np.cos(theta)

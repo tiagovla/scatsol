@@ -5,9 +5,10 @@ from scatsol.region import CylindricalRegion
 class CylindricalGeometry:
     """Representation of a cylindrical geometry.
 
-    Attributes: 
+    Attributes:
         regions: sequence of cylindrical regions.
     """
+
     def __init__(self, regions: Sequence[CylindricalRegion]):
         self.regions = regions
         self._check_limits()

@@ -13,6 +13,9 @@ FREE_SPACE_PERMEABILITY: float = 4 * PI * 1e-7
 FREE_SPACE_LIGHT_SPEED: float = 299792458.0
 """Speed of light in free space [m/s]."""
 
+INFTY: float = float("inf")
+"""Infinity constant."""
+
 
 class Polarization(Enum):
     TM = "TM"

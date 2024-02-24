@@ -1,8 +1,9 @@
 from scatsol.material import Material
-
+from typing import Annotated
 
 class CylindricalRegion:
-    def __init__(self, inner_radius: float, outer_radius: float, material: Material):
+    def __init__(self, inner_radius: Annotated[float, "m"], outer_radius:
+                 Annotated[float, "m"], material: Material):
         """Cylindrical region representation.
 
         Args:
@@ -13,6 +14,17 @@ class CylindricalRegion:
         self.inner_radius = inner_radius
         self.outer_radius = outer_radius
         self.material = material
+
+    def check_within(self, radius: Annotated[float, "m"]) -> bool:
+        """Check if a radius is within the region not including the outer radius.
+
+        Args:
+            radius: radius to check.
+
+        Returns:
+            True if the radius is within the region, False otherwise.
+        """
+        return self.inner_radius <= radius < self.outer_radius
 
     def __str__(self) -> str:
         return (
