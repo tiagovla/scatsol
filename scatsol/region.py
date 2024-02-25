@@ -1,9 +1,14 @@
 from scatsol.material import Material
 from typing import Annotated
 
+
 class CylindricalRegion:
-    def __init__(self, inner_radius: Annotated[float, "m"], outer_radius:
-                 Annotated[float, "m"], material: Material):
+    def __init__(
+        self,
+        inner_radius: Annotated[float, "m"],
+        outer_radius: Annotated[float, "m"],
+        material: Material,
+    ):
         """Cylindrical region representation.
 
         Args:

@@ -76,5 +76,4 @@ class Material:
         Returns:
             Material: perfect electric conductor material.
         """
-        return cls(epsilon_r=-1j*INFTY, mu_r=1.0)
-
+        return cls(epsilon_r=-1j * INFTY, mu_r=1.0)
