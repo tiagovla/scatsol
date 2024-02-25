@@ -12,11 +12,11 @@ clean:
 format: clean
 	@poetry run black scatsol/ tests/
 
-setup:
-	poetry run python setup.py build_ext --inplace
-
 test:
 	@poetry run pytest --cov=scatsol
 
 testhtml:
 	@poetry run pytest --cov=scatsol --cov-report=html
+
+pre-commit:
+	@pre-commit run --all-files

@@ -155,7 +155,7 @@ class CylindricalSolver:
             cn[:, i] = num / den
             dn[:, i] = dcn[:, i] * cn[:, i]
 
-        cn = np.nan_to_num(cn) # HACK: nan values should be correctly handled
+        cn = np.nan_to_num(cn)  # HACK: nan values should be correctly handled
         dn = np.nan_to_num(dn)
 
         return CylindricalSolution(
