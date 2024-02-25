@@ -1,5 +1,5 @@
 import numpy.typing as npt
-from typing import Annotated, Tuple
+from typing import Annotated
 from scatsol.constant import Polarization
 from scatsol.geometry import CylindricalGeometry
 from scipy.special import h2vp, h1vp, hankel2, hankel1, jv, jvp
@@ -19,7 +19,9 @@ class CylindricalSolution:
         self.geometry = geometry
         self.frequency = frequency
 
-    def total_field(self, xyz: npt.NDArray[np.float64]):
+    def total_field(
+        self, xyz: npt.NDArray[np.float64]
+    ) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
         e_field = np.zeros_like(xyz, dtype=np.complex128)
         h_field = np.zeros_like(xyz, dtype=np.complex128)
 
@@ -29,11 +31,12 @@ class CylindricalSolution:
 
     def incident_field(
         self, xyz: npt.NDArray[np.float64]
-    ) -> Tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
+    ) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
         e_field = np.zeros_like(xyz, dtype=np.complex128)
         h_field = np.zeros_like(xyz, dtype=np.complex128)
 
         k = self.geometry.regions[-1].material.k(self.frequency)
+        eta = self.geometry.regions[-1].material.eta
         nn = np.arange(0, self.an.shape[0])
         eps = 1.0 + np.heaviside(nn - 0.5, 1)
 
@@ -41,15 +44,19 @@ class CylindricalSolution:
         phi = np.arctan2(xyz[:, 1], xyz[:, 0])
 
         besselterm = jv(nn[:, None], k * rho)
+        besselpterm = jvp(nn[:, None], k * rho)
         costerm = np.cos(nn[:, None] * phi)
+        sinterm = np.sin(nn[:, None] * phi)
         an = 1j**-nn
 
         e_field[:, 2] = an * eps @ (besselterm * costerm)
+        h_field[:, 0] = (nn * an * eps @ (besselterm * sinterm)) / (1j * k * eta * rho)
+        h_field[:, 1] = (k * an * eps @ (besselpterm * costerm)) / (1j * k * eta * rho)
         return e_field, h_field
 
 
 class CylindricalSolver:
-    def __init__(self, geometry: CylindricalGeometry, frequency: float = 300e6):
+    def __init__(self, geometry: CylindricalGeometry, frequency: Annotated[float, "Hz"] = 300e6):
         self.geometry = geometry
         self.frequency = frequency
 
