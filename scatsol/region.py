@@ -24,7 +24,7 @@ class CylindricalRegion:
         """Check if a radius is within the region not including the outer radius.
 
         Args:
-            radius: radius to check.
+            radius: radius in meters to check.
 
         Returns:
             True if the radius is within the region, False otherwise.

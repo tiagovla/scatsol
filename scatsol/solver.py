@@ -100,11 +100,11 @@ class CylindricalSolver:
 
         n_regions = len(self.geometry.regions)
         a = np.array([region.outer_radius for region in self.geometry.regions[:-1]])
-        dcn = np.zeros((n, n_regions))
-        cn = np.zeros((n, n_regions))
-        dn = np.zeros((n, n_regions))
-        re = np.zeros((n, n_regions))
-        an = np.zeros(n)
+        dcn = np.zeros((n, n_regions), dtype=np.complex128)
+        cn = np.zeros((n, n_regions), dtype=np.complex128)
+        dn = np.zeros((n, n_regions), dtype=np.complex128)
+        re = np.zeros((n, n_regions), dtype=np.complex128)
+        an = np.zeros(n, dtype=np.complex128)
         nn = np.arange(0, n)
 
         for i in range(0, n_regions - 1):

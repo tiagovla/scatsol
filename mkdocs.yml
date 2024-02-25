@@ -1,0 +1,13 @@
+site_name: Scattering Solutions
+
+theme:
+  name: "material"
+
+plugins:
+  - search
+  - mkdocstrings
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
