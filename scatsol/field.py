@@ -3,17 +3,17 @@ import numpy.typing as npt
 
 
 class Field:
-    def __init__(self, field: npt.NDArray[np.complex128]):
-        self.field = field
+    def __init__(self, data: npt.NDArray[np.complex128]):
+        self.data = data
 
     def x(self):
-        return self.field[:, 0]
+        return self.data[:, 0]
 
     def y(self):
-        return self.field[:, 1]
+        return self.data[:, 1]
 
     def z(self):
-        return self.field[:, 2]
+        return self.data[:, 2]
 
     @classmethod
     def from_cylindrical(
