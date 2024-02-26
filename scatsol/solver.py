@@ -1,8 +1,8 @@
-import numpy.typing as npt
-from typing import Annotated
 from scatsol.constant import Polarization
 from scatsol.geometry import CylindricalGeometry
+from scatsol.typing import FloatArray, ComplexArray, IntArray
 from scipy.special import h2vp, h1vp, hankel2, hankel1, jv, jvp
+from typing import Annotated
 import numpy as np
 
 
@@ -10,9 +10,9 @@ class CylindricalSolution:
     def __init__(
         self,
         n: int,
-        an: npt.NDArray[np.complex128],
-        cn: npt.NDArray[np.complex128],
-        dn: npt.NDArray[np.complex128],
+        an: ComplexArray,
+        cn: ComplexArray,
+        dn: ComplexArray,
         geometry: CylindricalGeometry,
         frequency: Annotated[float, "Hz"],
     ):
@@ -23,9 +23,7 @@ class CylindricalSolution:
         self.geometry = geometry
         self.frequency = frequency
 
-    def total_field(
-        self, xyz: npt.NDArray[np.float64]
-    ) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
+    def total_field(self, xyz: FloatArray) -> tuple[ComplexArray, ComplexArray]:
         e_field = np.zeros_like(xyz, dtype=np.complex128)
         h_field = np.zeros_like(xyz, dtype=np.complex128)
 
@@ -40,10 +38,11 @@ class CylindricalSolution:
         for idx, region in enumerate(self.geometry.regions):
             k = region.material.k(self.frequency)
             mask = np.vectorize(region.check_within)(rho)
-            if region == self.geometry.regions[-1]:
+
+            if region == self.geometry.regions[-1]: # outer region
                 besselterm = jv(nn[:, None], k * rho[mask])
                 e_field[mask, 2] = ((self.an + 1j**-nn) * eps) @ (besselterm * costerm[:, mask])
-            elif region == self.geometry.regions[0]:
+            elif region == self.geometry.regions[0]: # inner region
                 besselterm = jv(nn[:, None], k * rho[mask])
                 e_field[mask, 2] = ((self.cn[:, 0] + self.dn[:, 0]) * eps) @ (
                     besselterm * costerm[:, mask]
@@ -55,9 +54,7 @@ class CylindricalSolution:
                 e_field[mask, 2] += (self.dn[:, idx] * eps) @ (besselterm_1 * costerm[:, mask])
         return e_field, h_field
 
-    def incident_field(
-        self, xyz: npt.NDArray[np.float64]
-    ) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
+    def incident_field(self, xyz: FloatArray) -> tuple[ComplexArray, ComplexArray]:
         e_field = np.zeros_like(xyz, dtype=np.complex128)
         h_field = np.zeros_like(xyz, dtype=np.complex128)
 
@@ -89,75 +86,111 @@ class CylindricalSolver:
     def __str__(self) -> str:
         return f"CylindricalSolver(geometry={self.geometry}, frequency={self.frequency})"
 
-    def solve(
-        self,
-        n: int = 50,
-        tolerance: float | None = 1e-6,
-        polarization: Polarization = Polarization.TM,
-    ):
-        if n is None and tolerance is None:
-            raise ValueError("n or tolerance must be provided.")
-
+    def _calculate_coefficients_tm(
+        self, nn: IntArray
+    ) -> tuple[ComplexArray, ComplexArray, ComplexArray]:
         n_regions = len(self.geometry.regions)
-        a = np.array([region.outer_radius for region in self.geometry.regions[:-1]])
-        dcn = np.zeros((n, n_regions), dtype=np.complex128)
-        cn = np.zeros((n, n_regions), dtype=np.complex128)
-        dn = np.zeros((n, n_regions), dtype=np.complex128)
-        re = np.zeros((n, n_regions), dtype=np.complex128)
-        an = np.zeros(n, dtype=np.complex128)
-        nn = np.arange(0, n)
+        radius = np.array([region.outer_radius for region in self.geometry.regions[:-1]])
+
+        re = np.zeros((nn.size, n_regions - 1), dtype=np.complex128)
+        dcn = np.zeros((nn.size, n_regions - 1), dtype=np.complex128)
+        an = np.zeros(nn.size, dtype=np.complex128)
+        cn = np.zeros((nn.size, n_regions - 1), dtype=np.complex128)
+        dn = np.zeros((nn.size, n_regions - 1), dtype=np.complex128)
 
         for i in range(0, n_regions - 1):
-            mi = self.geometry.regions[i].material
-            mip1 = self.geometry.regions[i + 1].material
-            ki = mi.k(self.frequency)
-            kip1 = mip1.k(self.frequency)
+            mi, mip1 = self.geometry.regions[i].material, self.geometry.regions[i + 1].material
+            ki, kip1 = mi.k(self.frequency), mip1.k(self.frequency)
+            kiai, kip1ai = ki * radius[i], kip1 * radius[i]
 
             if i == 0:
                 dcn[:, i] = 1
 
-            kiai = ki * a[i]
-            kip1ai = kip1 * a[i]
+            re[:, i] = self._calculate_re(nn, kiai, mi, mip1, dcn[:, i])
 
-            amp = np.sqrt((mip1.epsilon * mi.mu) / (mip1.mu * mi.epsilon))
-            num = hankel1(nn, kiai) + dcn[:, i] * hankel2(nn, kiai)
-            den = h1vp(nn, kiai) + dcn[:, i] * h2vp(nn, kiai)
+            if i < n_regions - 2:
+                dcn[:, i + 1] = self._calculate_dcn(nn, kip1ai, re[:, i])
 
-            re[:, i] = amp * num / den
+        an = self._calculate_an(nn, radius, re)
+        cn, dn = self._calculate_cn_dn(nn, radius, dcn, an)
 
-            if i < n_regions - 1:
-                num = hankel1(nn, kip1ai) - re[:, i] * h1vp(nn, kip1ai)
-                den = hankel2(nn, kip1ai) - re[:, i] * h2vp(nn, kip1ai)
-                dcn[:, i + 1] = -num / den
+        cn = np.nan_to_num(cn)
+        dn = np.nan_to_num(dn)
 
-        kam = self.geometry.regions[-1].material.k(self.frequency) * a[-1]
-        kmam = self.geometry.regions[-2].material.k(self.frequency) * a[-1]
-        num = jv(nn, kam) - re[:, -2] * jvp(nn, kam)
-        den = hankel2(nn, kam) - re[:, -2] * h2vp(nn, kam)
+        return an, cn, dn
+
+    def _calculate_re(self, nn, kiai, mi, mip1, dcn_i):
+        amp = np.sqrt((mip1.epsilon * mi.mu) / (mip1.mu * mi.epsilon))
+        num = hankel1(nn, kiai) + dcn_i * hankel2(nn, kiai)
+        den = h1vp(nn, kiai) + dcn_i * h2vp(nn, kiai)
+
+        return amp * num / den
+
+    def _calculate_dcn(self, nn, kip1ai, re_i):
+        num = hankel1(nn, kip1ai) - re_i * h1vp(nn, kip1ai)
+        den = hankel2(nn, kip1ai) - re_i * h2vp(nn, kip1ai)
+
+        return -num / den
+
+    def _calculate_an(
+        self,
+        nn: IntArray,
+        radius: FloatArray,
+        re: ComplexArray,
+    ):
+        an = np.zeros(nn.size, dtype=np.complex128)
+        kam = self.geometry.regions[-1].material.k(self.frequency) * radius[-1]
+        num = jv(nn, kam) - re[:, -1] * jvp(nn, kam)
+        den = hankel2(nn, kam) - re[:, -1] * h2vp(nn, kam)
         an = -(1j ** (-nn)) * num / den
 
-        # founding cn and dn by going backwards
+        return an
+
+    def _calculate_cn_dn(
+        self,
+        nn: IntArray,
+        radius: FloatArray,
+        dcn: ComplexArray,
+        an: ComplexArray,
+    ) -> tuple[ComplexArray, ComplexArray]:
+        n_regions = len(self.geometry.regions)
+        cn = np.zeros((an.size, n_regions - 1), dtype=np.complex128)
+        dn = np.zeros((an.size, n_regions - 1), dtype=np.complex128)
+
+        kam = self.geometry.regions[-1].material.k(self.frequency) * radius[-1]
+        kmam = self.geometry.regions[-2].material.k(self.frequency) * radius[-1]
+
         num = 1j ** (-nn) * jv(nn, kam) + an * hankel2(nn, kam)
-        den = hankel1(nn, kmam) + dcn[:, -2] * hankel2(nn, kmam)
-        cn[:, -2] = num / den
-        dn[:, -2] = dcn[:, -2] * cn[:, -2]
+        den = hankel1(nn, kmam) + dcn[:, -1] * hankel2(nn, kmam)
+        cn[:, -1] = num / den
+        dn[:, -1] = dcn[:, -1] * cn[:, -1]
 
         for i in range(n_regions - 3, -1, -1):
-            mi = self.geometry.regions[i].material
-            mip1 = self.geometry.regions[i + 1].material
-            ki = mi.k(self.frequency)
-            kip1 = mip1.k(self.frequency)
-            kiai = ki * a[i]
-            kip1ai = kip1 * a[i]
+            mi, mip1 = self.geometry.regions[i].material, self.geometry.regions[i + 1].material
+            ki, kip1 = mi.k(self.frequency), mip1.k(self.frequency)
+            kiai, kip1ai = ki * radius[i], kip1 * radius[i]
 
             num = cn[:, i + 1] * hankel1(nn, kip1ai) + dn[:, i + 1] * hankel2(nn, kip1ai)
             den = hankel1(nn, kiai) + dcn[:, i] * hankel2(nn, kiai)
             cn[:, i] = num / den
             dn[:, i] = dcn[:, i] * cn[:, i]
 
-        cn = np.nan_to_num(cn)  # HACK: nan values should be correctly handled
-        dn = np.nan_to_num(dn)
+        return cn, dn
 
-        return CylindricalSolution(
-            n=n, an=an, cn=cn, dn=dn, geometry=self.geometry, frequency=self.frequency
-        )
+    def solve(
+        self,
+        n: int = 50,
+        tolerance: float | None = 1e-6,
+        polarization: Polarization = Polarization.TM,
+    ) -> CylindricalSolution:
+        if n is None and tolerance is None:
+            raise ValueError("n or tolerance must be provided.")
+
+        if polarization == Polarization.TM:
+            an, cn, dn = self._calculate_coefficients_tm(np.arange(0, n))
+
+            return CylindricalSolution(
+                n=n, an=an, cn=cn, dn=dn, geometry=self.geometry, frequency=self.frequency
+            )
+        else:
+            raise NotImplementedError("Only TE polarization is implemented.")
