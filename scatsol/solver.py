@@ -39,10 +39,10 @@ class CylindricalSolution:
             k = region.material.k(self.frequency)
             mask = np.vectorize(region.check_within)(rho)
 
-            if region == self.geometry.regions[-1]: # outer region
+            if region == self.geometry.regions[-1]:  # outer region
                 besselterm = jv(nn[:, None], k * rho[mask])
                 e_field[mask, 2] = ((self.an + 1j**-nn) * eps) @ (besselterm * costerm[:, mask])
-            elif region == self.geometry.regions[0]: # inner region
+            elif region == self.geometry.regions[0]:  # inner region
                 besselterm = jv(nn[:, None], k * rho[mask])
                 e_field[mask, 2] = ((self.cn[:, 0] + self.dn[:, 0]) * eps) @ (
                     besselterm * costerm[:, mask]
