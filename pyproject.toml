@@ -20,6 +20,7 @@ sphinx-autodoc-typehints = "^2.0.0"
 coverage = "^7.4.2"
 pytest-cov = "^4.1.0"
 black = "^24.2.0"
+matplotlib = "^3.10.1"
 
 [tool.poetry.extras]
 docs = ["sphinx"]

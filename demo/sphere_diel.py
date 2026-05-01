@@ -19,24 +19,27 @@ def main() -> None:
     _, H = scatsol.sphere.mie_total_field(xyz, radius, frequency, background=vacuum, sphere=sphere, n=50)
     H = scatsol.utils.field_sph2cart(H, xyz)
 
-    fig, ax = plt.subplots(constrained_layout=True, figsize=(5, 4))
+    fig, ax = plt.subplots(constrained_layout=True, figsize=(4, 3.5))
     h = ax.tripcolor(
         *xyz[:, np.array([0, 2])].T,
         vacuum.eta * H[:, 1].real,
         shading="gouraud",
         vmin=-2,
         vmax=2,
+        rasterized=True,
     )
-    fig.colorbar(h, ax=ax)
+    cb0 = fig.colorbar(h, ax=ax)
     ax.plot(
         radius * np.cos(np.linspace(0, 2 * np.pi, 100)),
         radius * np.sin(np.linspace(0, 2 * np.pi, 100)),
         lw=1.0,
         color="white",
     )
-    ax.set(xlabel="$x$", ylabel="$z$")
+    ax.set(xlabel="$x$ [$\lambda_0$]", ylabel="$y$ [$\lambda_0$]")
     ax.margins(0)
-    ax.set_title(r"$\eta_0 H_y$")
+    cb0.ax.set_title(r"$\eta_0 H_y$ [V/m]")
+    ax.set_aspect("equal")
+    fig.savefig("figures/solution_sphere_diel.pgf", dpi=300)
 
 
 if __name__ == "__main__":
