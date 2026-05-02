@@ -30,9 +30,9 @@ def main():
 
     _, ax = plt.subplots(constrained_layout=True, figsize=(6, 6))
     ax.tripcolor(*xyz[:, [0, 1]].T, e_field[:, 2].real, shading="gouraud", vmin=-1, vmax=1)
-    # for r in geometry.regions[:-1]:
-    #     phi = np.linspace(0, 2 * np.pi, 100)
-    #     ax.plot(r.outer_radius * np.cos(phi), r.outer_radius * np.sin(phi), "k")
+    for r in geometry.regions[:-1]:
+        phi = np.linspace(0, 2 * np.pi, 100)
+        ax.plot(r.outer_radius * np.cos(phi), r.outer_radius * np.sin(phi), "k")
     ax.set(xlabel="x [m]", ylabel="y [m]")
     ax.margins(0)
     plt.show()
