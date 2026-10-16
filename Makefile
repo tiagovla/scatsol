@@ -20,3 +20,8 @@ testhtml:
 
 pre-commit:
 	@pre-commit run --all-files
+
+docs-results:
+	@for demo in demo/*.py; do \
+		PYTHONPATH=docs MPLBACKEND=module://demo_backend uv run python "$$demo" || exit; \
+	done

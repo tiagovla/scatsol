@@ -30,6 +30,9 @@ plugins:
             show_root_full_path: false
             show_source: false
 
+hooks:
+  - docs/hooks.py
+
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
