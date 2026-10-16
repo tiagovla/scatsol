@@ -41,7 +41,7 @@ class Material:
         Returns:
             eta: electromagnetic impedance.
         """
-        return np.sqrt(self.mu / self.epsilon)
+        return np.lib.scimath.sqrt(self.mu / self.epsilon)
 
     def k(self, frequency: Annotated[float, "Hz"]) -> float | complex:
         """Calculate the material's electromagnetic wavenumber.
@@ -52,12 +52,12 @@ class Material:
         Returns:
             k: electromagnetic wavenumber.
         """
-        return 2 * np.pi * frequency * np.sqrt(self.mu * self.epsilon)
+        return 2 * np.pi * frequency * np.lib.scimath.sqrt(self.mu * self.epsilon)
 
     def __str__(self) -> str:
         return f"Material(epsilon_r={self.epsilon_r}, mu_r={self.mu_r})"
 
-    def __rep__(self) -> str:
+    def __repr__(self) -> str:
         return self.__str__()
 
     @classmethod

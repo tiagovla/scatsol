@@ -1,5 +1,6 @@
 from scatsol.material import Material
 from typing import Annotated
+import math
 
 
 class CylindricalRegion:
@@ -16,8 +17,17 @@ class CylindricalRegion:
             outer_radius: outer radius of the cylindrical region in meters.
             material: material of the cylindrical region.
         """
-        self.inner_radius = inner_radius
-        self.outer_radius = outer_radius
+        if not math.isfinite(inner_radius) or inner_radius < 0:
+            raise ValueError("inner_radius must be a finite, non-negative value.")
+        if math.isnan(outer_radius) or outer_radius <= inner_radius:
+            raise ValueError("outer_radius must be greater than inner_radius.")
+        if not math.isfinite(outer_radius) and outer_radius != float("inf"):
+            raise ValueError("outer_radius must be finite or positive infinity.")
+        if not isinstance(material, Material):
+            raise TypeError("material must be a Material instance.")
+
+        self.inner_radius = float(inner_radius)
+        self.outer_radius = float(outer_radius)
         self.material = material
 
     def check_within(self, radius: Annotated[float, "m"]) -> bool:

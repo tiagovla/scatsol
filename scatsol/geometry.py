@@ -10,10 +10,14 @@ class CylindricalGeometry:
     """
 
     def __init__(self, regions: Sequence[CylindricalRegion]):
-        self.regions = regions
+        self.regions = tuple(regions)
         self._check_limits()
 
     def _check_limits(self):
+        if not self.regions:
+            raise ValueError("At least one region is required.")
+        if any(not isinstance(region, CylindricalRegion) for region in self.regions):
+            raise TypeError("regions must contain only CylindricalRegion instances.")
         if self.regions[0].inner_radius != 0.0:
             raise ValueError("First region must start at r=0.")
         if self.regions[-1].outer_radius != float("inf"):
@@ -24,4 +28,4 @@ class CylindricalGeometry:
 
     def __str__(self) -> str:
         regions = ", ".join([str(region) for region in self.regions])
-        return f"CylindricalSolver(regions={regions})"
+        return f"CylindricalGeometry(regions={regions})"

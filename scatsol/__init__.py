@@ -5,7 +5,7 @@ from scatsol.constant import INFTY, Polarization
 from scatsol.geometry import CylindricalGeometry
 from scatsol.material import Material
 from scatsol.region import CylindricalRegion
-from scatsol.solver import CylindricalSolver
+from scatsol.solver import CylindricalSolution, CylindricalSolver
 
 __all__ = [
     "INFTY",
@@ -14,4 +14,5 @@ __all__ = [
     "Material",
     "CylindricalRegion",
     "CylindricalSolver",
+    "CylindricalSolution",
 ]
