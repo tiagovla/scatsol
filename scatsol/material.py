@@ -1,5 +1,7 @@
-from scatsol.constant import FREE_SPACE_PERMITTIVITY as EPSILON_0
-from scatsol.constant import FREE_SPACE_PERMEABILITY as MU_0
+from scatsol.constant import VACUUM_PERMEABILITY as MU_0
+from scatsol.constant import VACUUM_PERMITTIVITY as EPSILON_0
+from scatsol.constant import INFTY
+from typing import Annotated
 import numpy as np
 
 
@@ -33,50 +35,57 @@ class Material:
         return MU_0 * self.mu_r
 
     @property
+    def is_pec(self) -> bool:
+        """Whether this material was created as a perfect electric conductor."""
+        return (
+            isinstance(self.epsilon_r, complex)
+            and self.epsilon_r.real == 0
+            and np.isneginf(self.epsilon_r.imag)
+            and self.mu_r == 1.0
+        )
+
+    @property
     def eta(self) -> float | complex:
         """Calculate the material's electromagnetic impedance.
 
         Returns:
             eta: electromagnetic impedance.
         """
-        return np.sqrt(self.mu / self.epsilon)
+        return np.lib.scimath.sqrt(self.mu / self.epsilon)
+
+    def k(self, frequency: Annotated[float, "Hz"]) -> float | complex:
+        """Calculate the material's electromagnetic wavenumber.
+
+        Args:
+            frequency (float, Hz): frequency.
+
+        Returns:
+            k: electromagnetic wavenumber.
+        """
+        if self.is_pec:
+            return complex(0.0, np.inf)
+        return 2 * np.pi * frequency * np.lib.scimath.sqrt(self.mu * self.epsilon)
 
     def __str__(self) -> str:
         return f"Material(epsilon_r={self.epsilon_r}, mu_r={self.mu_r})"
 
-    def __rep__(self) -> str:
+    def __repr__(self) -> str:
         return self.__str__()
 
-
-class Medium:
-    def __init__(self, material: Material, frequency: float = 300e6) -> None:
-        """Representation of a electromagnetic media.
-
-        Args:
-            material (Material): material object.
-            frequency (float): frequency in Hz.
-        """
-        self.material = material
-        self.frequency = frequency
-
-    @property
-    def k(self) -> float | complex:
-        return 2.0 * np.pi * self.frequency * np.sqrt(self.material.epsilon * self.material.mu)
-
-    @property
-    def eta(self) -> float | complex:
-        """Calculate the material's electromagnetic impedance.
+    @classmethod
+    def vacuum(cls) -> "Material":
+        """Create a vacuum material.
 
         Returns:
-            eta: electromagnetic impedance.
+            Material: vacuum material.
         """
-        return self.material.eta
+        return cls(epsilon_r=1.0, mu_r=1.0)
 
-    @property
-    def omega(self) -> float:
-        """Frequency in rads/s.
+    @classmethod
+    def PEC(cls) -> "Material":
+        """Create a perfect electric conductor material.
 
         Returns:
-            omega: angular frequency.
+            Material: perfect electric conductor material.
         """
-        return 2 * np.pi * self.frequency
+        return cls(epsilon_r=complex(0.0, -INFTY), mu_r=1.0)

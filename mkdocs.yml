@@ -1,0 +1,45 @@
+site_name: Scattering Solutions
+
+nav:
+  - Home: index.md
+  - Theory: theory.md
+  - API reference: components.md
+  - Examples: examples.md
+
+theme:
+  name: "material"
+  palette:
+    scheme: slate
+    primary: green
+    accent: lime
+  font:
+    text: IBM Plex Mono
+    code: IBM Plex Mono
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+          options:
+            docstring_style: google
+            docstring_section_style: list
+            members_order: source
+            show_root_heading: true
+            show_root_full_path: false
+            show_source: false
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+extra_css:
+  - stylesheets/terminal.css

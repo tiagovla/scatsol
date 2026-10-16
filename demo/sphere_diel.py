@@ -1,44 +1,57 @@
-import matplotlib.pyplot as plt
+"""3D Mie scattering by a dielectric sphere."""
+
 import numpy as np
+from matplotlib import pyplot as plt
 
-from scatsol import Material
-import scatsol.sphere
-import scatsol.utils
+from scatsol import Material, SphericalGeometry, SphericalRegion, SphericalSolver
 
 
-def main() -> None:
-    radius = 1.0  # 1m
-    frequency = 300e6  # 300MHz
-    vacuum = Material(epsilon_r=1, mu_r=1)
-    sphere = Material(epsilon_r=2.56, mu_r=1)
-
-    interval = np.linspace(-3, 3, 80)
-    x, z = np.meshgrid(interval, interval)
-    xyz = np.stack((x.ravel(), 0 * x.ravel(), z.ravel()), axis=1)
-
-    _, H = scatsol.sphere.mie_total_field(xyz, radius, frequency, background=vacuum, sphere=sphere, n=50)
-    H = scatsol.utils.field_sph2cart(H, xyz)
-
-    fig, ax = plt.subplots(constrained_layout=True, figsize=(5, 4))
-    h = ax.tripcolor(
-        *xyz[:, np.array([0, 2])].T,
-        vacuum.eta * H[:, 1].real,
-        shading="gouraud",
-        vmin=-2,
-        vmax=2,
+def solve_dielectric_sphere(frequency=300e6):
+    """Return a dielectric sphere with a half-wavelength vacuum coating."""
+    sphere_radius = 1.0
+    vacuum = Material(epsilon_r=1.0, mu_r=1.0)
+    wavelength = 2 * np.pi / abs(vacuum.k(frequency))
+    coating_outer_radius = sphere_radius + 0.5 * wavelength
+    geometry = SphericalGeometry(
+        [
+            SphericalRegion(0.0, sphere_radius, Material(epsilon_r=2.56, mu_r=1.0)),
+            SphericalRegion(sphere_radius, coating_outer_radius, vacuum),
+            SphericalRegion(coating_outer_radius, float("inf"), vacuum),
+        ]
     )
-    fig.colorbar(h, ax=ax)
-    ax.plot(
-        radius * np.cos(np.linspace(0, 2 * np.pi, 100)),
-        radius * np.sin(np.linspace(0, 2 * np.pi, 100)),
-        lw=1.0,
-        color="white",
+    solution = SphericalSolver(geometry, frequency=frequency).solve(n=50)
+    return geometry, solution
+
+
+def plot_xz_field(geometry, solution, extent=3.0, resolution=80):
+    """Plot the real eta0 H_y field in the y=0 plane, matching the thesis demo."""
+    axis = np.linspace(-extent, extent, resolution)
+    x, z = np.meshgrid(axis, axis)
+    points = np.column_stack((x.ravel(), np.zeros(x.size), z.ravel()))
+    h_y = solution.h_y(points).real.reshape(x.shape) * Material.vacuum().eta
+
+    fig, ax = plt.subplots(figsize=(5, 4), constrained_layout=True)
+    image = ax.tripcolor(x.ravel(), z.ravel(), h_y.ravel(), shading="gouraud", vmin=-2, vmax=2)
+    for region in geometry.regions[:-1]:
+        ax.add_patch(plt.Circle((0, 0), region.outer_radius, fill=False, color="white"))
+    fig.colorbar(image, ax=ax)
+    ax.set(
+        xlabel="$x$",
+        ylabel="$z$",
+        title=r"$\eta_0 H_y$",
+        xlim=(-extent, extent),
+        ylim=(-extent, extent),
+        aspect="equal",
     )
-    ax.set(xlabel="$x$", ylabel="$z$")
     ax.margins(0)
-    ax.set_title(r"$\eta_0 H_y$")
+    return fig, ax
+
+
+def main():
+    geometry, solution = solve_dielectric_sphere()
+    plot_xz_field(geometry, solution)
+    plt.show()
 
 
 if __name__ == "__main__":
     main()
-    plt.show()
