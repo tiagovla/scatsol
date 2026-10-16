@@ -35,6 +35,16 @@ class Material:
         return MU_0 * self.mu_r
 
     @property
+    def is_pec(self) -> bool:
+        """Whether this material was created as a perfect electric conductor."""
+        return (
+            isinstance(self.epsilon_r, complex)
+            and self.epsilon_r.real == 0
+            and np.isneginf(self.epsilon_r.imag)
+            and self.mu_r == 1.0
+        )
+
+    @property
     def eta(self) -> float | complex:
         """Calculate the material's electromagnetic impedance.
 
@@ -52,6 +62,8 @@ class Material:
         Returns:
             k: electromagnetic wavenumber.
         """
+        if self.is_pec:
+            return complex(0.0, np.inf)
         return 2 * np.pi * frequency * np.lib.scimath.sqrt(self.mu * self.epsilon)
 
     def __str__(self) -> str:
@@ -76,4 +88,4 @@ class Material:
         Returns:
             Material: perfect electric conductor material.
         """
-        return cls(epsilon_r=-1j * INFTY, mu_r=1.0)
+        return cls(epsilon_r=complex(0.0, -INFTY), mu_r=1.0)

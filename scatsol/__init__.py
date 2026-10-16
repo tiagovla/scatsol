@@ -2,10 +2,15 @@ __version__ = "0.0.2"
 
 
 from scatsol.constant import INFTY, Polarization
-from scatsol.geometry import CylindricalGeometry
+from scatsol.geometry import CylindricalGeometry, SphericalGeometry
 from scatsol.material import Material
-from scatsol.region import CylindricalRegion
-from scatsol.solver import CylindricalSolution, CylindricalSolver
+from scatsol.region import CylindricalRegion, SphericalRegion
+from scatsol.solver import (
+    CylindricalSolution,
+    CylindricalSolver,
+    SphericalSolution,
+    SphericalSolver,
+)
 
 __all__ = [
     "INFTY",
@@ -13,6 +18,10 @@ __all__ = [
     "CylindricalGeometry",
     "Material",
     "CylindricalRegion",
+    "SphericalGeometry",
+    "SphericalRegion",
     "CylindricalSolver",
     "CylindricalSolution",
+    "SphericalSolver",
+    "SphericalSolution",
 ]
