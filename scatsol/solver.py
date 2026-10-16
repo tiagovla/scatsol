@@ -41,7 +41,10 @@ class CylindricalSolution:
 
             if region == self.geometry.regions[-1]:  # outer region
                 besselterm = jv(nn[:, None], k * rho[mask])
-                e_field[mask, 2] = ((self.an + 1j**-nn) * eps) @ (besselterm * costerm[:, mask])
+                scattered_term = hankel2(nn[:, None], k * rho[mask])
+                incident_field = (1j**-nn * eps) @ (besselterm * costerm[:, mask])
+                scattered_field = (self.an * eps) @ (scattered_term * costerm[:, mask])
+                e_field[mask, 2] = incident_field + scattered_field
             elif region == self.geometry.regions[0]:  # inner region
                 besselterm = jv(nn[:, None], k * rho[mask])
                 e_field[mask, 2] = ((self.cn[:, 0] + self.dn[:, 0]) * eps) @ (
@@ -53,6 +56,36 @@ class CylindricalSolution:
                 e_field[mask, 2] = (self.cn[:, idx] * eps) @ (besselterm_0 * costerm[:, mask])
                 e_field[mask, 2] += (self.dn[:, idx] * eps) @ (besselterm_1 * costerm[:, mask])
         return e_field, h_field
+
+    def e_x(self, xyz: FloatArray) -> ComplexArray:
+        """Return the x component of the total electric field at ``xyz``."""
+        e_field, _ = self.total_field(xyz)
+        return e_field[:, 0]
+
+    def e_y(self, xyz: FloatArray) -> ComplexArray:
+        """Return the y component of the total electric field at ``xyz``."""
+        e_field, _ = self.total_field(xyz)
+        return e_field[:, 1]
+
+    def e_z(self, xyz: FloatArray) -> ComplexArray:
+        """Return the z component of the total electric field at ``xyz``."""
+        e_field, _ = self.total_field(xyz)
+        return e_field[:, 2]
+
+    def h_x(self, xyz: FloatArray) -> ComplexArray:
+        """Return the x component of the total magnetic field at ``xyz``."""
+        _, h_field = self.total_field(xyz)
+        return h_field[:, 0]
+
+    def h_y(self, xyz: FloatArray) -> ComplexArray:
+        """Return the y component of the total magnetic field at ``xyz``."""
+        _, h_field = self.total_field(xyz)
+        return h_field[:, 1]
+
+    def h_z(self, xyz: FloatArray) -> ComplexArray:
+        """Return the z component of the total magnetic field at ``xyz``."""
+        _, h_field = self.total_field(xyz)
+        return h_field[:, 2]
 
     def incident_field(self, xyz: FloatArray) -> tuple[ComplexArray, ComplexArray]:
         e_field = np.zeros_like(xyz, dtype=np.complex128)
@@ -187,10 +220,18 @@ class CylindricalSolver:
             raise ValueError("n or tolerance must be provided.")
 
         if polarization == Polarization.TM:
-            an, cn, dn = self._calculate_coefficients_tm(np.arange(0, n))
+            # Orders well above the largest size parameter contribute negligibly,
+            # but direct Hankel evaluations become ill-conditioned there.
+            size_parameter = max(
+                abs(region.material.k(self.frequency) * region.outer_radius)
+                for region in self.geometry.regions[:-1]
+            )
+            n_required = int(np.ceil(size_parameter + 4 * size_parameter ** (1 / 3) + 2))
+            n_terms = min(n, n_required)
+            an, cn, dn = self._calculate_coefficients_tm(np.arange(0, n_terms))
 
             return CylindricalSolution(
-                n=n, an=an, cn=cn, dn=dn, geometry=self.geometry, frequency=self.frequency
+                n=n_terms, an=an, cn=cn, dn=dn, geometry=self.geometry, frequency=self.frequency
             )
         else:
             raise NotImplementedError("Only TE polarization is implemented.")
