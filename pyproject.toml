@@ -3,6 +3,7 @@ name = "scatsol"
 version = "0.0.2"
 description = "Electromagnetic Scattering Solutions"
 authors = [{ name = "tiagovla", email = "tiagovla@gmail.com" }]
+license = "GPL-3.0-or-later"
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "numpy>=1.26.4",
@@ -21,9 +22,9 @@ dev = [
     "coverage>=6.4.4",
     "pytest-cov>=3.0.0",
     "black>=22.6.0",
-    "mkdocs>=1.5.3",
+    "mkdocs>=1.6.1,<2",
     "mkdocstrings[python]>=0.24.0",
-    "mkdocs-material>=9.5.11",
+    "mkdocs-material>=9.7.7",
 ]
 
 [tool.uv]

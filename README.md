@@ -88,3 +88,7 @@ conventions](docs/theory.md), [API reference](docs/components.md), and
 ```bash
 uv run mkdocs build
 ```
+
+## License
+
+ScatSol is licensed under the [GNU General Public License v3.0 or later](LICENSE).
