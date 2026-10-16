@@ -1,40 +1,57 @@
-from scatsol import (
-    Material,
-    CylindricalRegion,
-    CylindricalGeometry,
-    CylindricalSolver,
-    Polarization,
-)
+"""Solve and plot scattering from a dielectric cylinder."""
+
 import numpy as np
 from matplotlib import pyplot as plt
-from scatsol.plotting import plot_geometry
+from matplotlib.patches import Circle
+
+from scatsol import (
+    CylindricalGeometry,
+    CylindricalRegion,
+    CylindricalSolver,
+    Material,
+    Polarization,
+)
+
+
+def solve_diel_cylinder():
+    """Return the geometry and solution for the dielectric-cylinder example."""
+    dielectric = Material(epsilon_r=2.0)
+    free_space = Material.free_space()
+    geometry = CylindricalGeometry(
+        [
+            CylindricalRegion(0.0, 0.5, dielectric),
+            CylindricalRegion(0.5, 0.8, free_space),
+            CylindricalRegion(0.8, float("inf"), dielectric),
+        ]
+    )
+    solution = CylindricalSolver(geometry, frequency=300e6).solve(
+        polarization=Polarization.TM, n=100
+    )
+    return geometry, solution
+
+
+def plot_diel_cylinder(geometry, solution, extent=3.0, resolution=100):
+    """Plot the real z component of the electric field and return the figure and axes."""
+    axis = np.linspace(-extent, extent, resolution)
+    x, y = np.meshgrid(axis, axis)
+    points = np.column_stack((x.ravel(), y.ravel(), np.zeros(x.size)))
+    e_z = solution.e_z(points).real
+    xy = points[:, :2].T
+
+    fig, ax = plt.subplots(constrained_layout=True, figsize=(6, 6))
+    ax.tripcolor(*xy, e_z, shading="gouraud", vmin=-1, vmax=1)
+    for region in geometry.regions[:-1]:
+        ax.add_patch(Circle((0, 0), region.outer_radius, fill=False, color="black"))
+    ax.set(xlabel="x [m]", ylabel="y [m]")
+    ax.set_aspect("equal")
+    ax.set_xlim(-extent, extent)
+    ax.set_ylim(-extent, extent)
+    return fig, ax
 
 
 def main():
-    diel = Material(epsilon_r=2.00, mu_r=1.0)
-    free_space = Material.free_space()
-
-    cylinder_r = CylindricalRegion(inner_radius=0.0, outer_radius=0.5, material=diel)
-    coating_r = CylindricalRegion(inner_radius=0.5, outer_radius=0.8, material=free_space)
-    free_space_r = CylindricalRegion(0.8, float("inf"), material=free_space)
-
-    geometry = CylindricalGeometry([cylinder_r, coating_r, free_space_r])
-    plot_geometry(geometry=geometry)
-
-    solver = CylindricalSolver(geometry=geometry, frequency=300e6)
-    solution = solver.solve(polarization=Polarization.TM, n=100)
-
-    x, y = np.meshgrid(np.linspace(-3, 3, 400), np.linspace(-3, 3, 400))
-    xyz = np.stack([x.ravel(), y.ravel(), np.zeros(x.size)], axis=1)
-    e_field, _ = solution.total_field(xyz)
-
-    _, ax = plt.subplots(constrained_layout=True, figsize=(6, 6))
-    ax.tripcolor(*xyz[:, [0, 1]].T, e_field[:, 2].real, shading="gouraud", vmin=-1, vmax=1)
-    for r in geometry.regions[:-1]:
-        phi = np.linspace(0, 2 * np.pi, 100)
-        ax.plot(r.outer_radius * np.cos(phi), r.outer_radius * np.sin(phi), "k")
-    ax.set(xlabel="x [m]", ylabel="y [m]")
-    ax.margins(0)
+    geometry, solution = solve_diel_cylinder()
+    plot_diel_cylinder(geometry, solution)
     plt.show()
 
 
