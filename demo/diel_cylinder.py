@@ -16,11 +16,11 @@ from scatsol import (
 def solve_diel_cylinder():
     """Return the geometry and solution for the dielectric-cylinder example."""
     dielectric = Material(epsilon_r=2.0)
-    free_space = Material.free_space()
+    vacuum = Material.vacuum()
     geometry = CylindricalGeometry(
         [
             CylindricalRegion(0.0, 0.5, dielectric),
-            CylindricalRegion(0.5, 0.8, free_space),
+            CylindricalRegion(0.5, 0.8, vacuum),
             CylindricalRegion(0.8, float("inf"), dielectric),
         ]
     )

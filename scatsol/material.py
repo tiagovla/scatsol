@@ -1,5 +1,5 @@
-from scatsol.constant import FREE_SPACE_PERMEABILITY as MU_0
-from scatsol.constant import FREE_SPACE_PERMITTIVITY as EPSILON_0
+from scatsol.constant import VACUUM_PERMEABILITY as MU_0
+from scatsol.constant import VACUUM_PERMITTIVITY as EPSILON_0
 from scatsol.constant import INFTY
 from typing import Annotated
 import numpy as np
@@ -61,11 +61,11 @@ class Material:
         return self.__str__()
 
     @classmethod
-    def free_space(cls) -> "Material":
-        """Create a free space material.
+    def vacuum(cls) -> "Material":
+        """Create a vacuum material.
 
         Returns:
-            Material: free space material.
+            Material: vacuum material.
         """
         return cls(epsilon_r=1.0, mu_r=1.0)
 

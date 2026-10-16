@@ -20,13 +20,13 @@ def test_version():
 
 def test_problem():
     diel = Material(epsilon_r=4.00, mu_r=1.0)
-    free_space = Material.free_space()
+    vacuum = Material.vacuum()
 
     cylinder_r = CylindricalRegion(inner_radius=0.0, outer_radius=0.5, material=diel)
     coating_r = CylindricalRegion(inner_radius=0.5, outer_radius=1.0, material=diel)
-    free_space_r = CylindricalRegion(1.0, float("inf"), material=free_space)
+    vacuum_r = CylindricalRegion(1.0, float("inf"), material=vacuum)
 
-    geometry = CylindricalGeometry([cylinder_r, coating_r, free_space_r])
+    geometry = CylindricalGeometry([cylinder_r, coating_r, vacuum_r])
     # plot_geometry(geometry=geometry)
 
     solver = CylindricalSolver(geometry=geometry, frequency=300e6)
