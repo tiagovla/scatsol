@@ -51,8 +51,9 @@ uv sync
 
 ## Quick start: cylinder
 
-This example solves TM scattering from a dielectric cylinder in vacuum. Lengths
-are in meters and frequency is in hertz.
+This example solves TM scattering from a dielectric cylinder in vacuum, with the
+incident plane wave traveling along +x. Lengths are in meters and frequency is
+in hertz.
 
 ```python
 import numpy as np
@@ -86,8 +87,8 @@ provide access to the real part, imaginary part, or magnitude.
 
 ## Quick start: sphere
 
-The spherical solver returns both electric and magnetic multipole channels for
-each solution:
+The spherical solver uses an x-polarized incident plane wave traveling along
++z, and returns both electric and magnetic multipole channels for each solution:
 
 ```python
 import numpy as np
