@@ -2,7 +2,6 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/docs-available-brightgreen)](https://tiagovla.github.io/scatsol/)
-[![Documentation](https://github.com/tiagovla/scatsol/actions/workflows/docs.yml/badge.svg)](https://github.com/tiagovla/scatsol/actions/workflows/docs.yml)
 
 ScatSol computes time-harmonic electromagnetic scattering from concentric
 cylindrical and spherical regions. It returns complex electric and magnetic
