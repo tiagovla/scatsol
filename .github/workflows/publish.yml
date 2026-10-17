@@ -10,7 +10,50 @@ permissions:
   contents: read
 
 jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.check.outputs.publish }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check whether this is a major or minor release
+        id: check
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          import subprocess
+
+          tag = os.environ["RELEASE_TAG"]
+          match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)", tag)
+          if not match:
+              raise SystemExit(f"Release tag must be a semantic version: {tag}")
+          current = tuple(map(int, match.groups()))
+          tags = subprocess.check_output(
+              ["git", "tag", "--list", "v*", "--sort=-version:refname"], text=True
+          ).splitlines()
+          previous_versions = []
+          for candidate in tags:
+              parsed = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)", candidate)
+              if parsed and tuple(map(int, parsed.groups())) < current:
+                  previous_versions.append(tuple(map(int, parsed.groups())))
+          previous = max(previous_versions, default=None)
+          publish = previous is None or current[:2] != previous[:2]
+          print(f"Current version: {current}; previous version: {previous}")
+          print(f"Publish: {publish}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"publish={'true' if publish else 'false'}\n")
+          PY
+
   build:
+    needs: check-version
+    if: needs.check-version.outputs.publish == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
