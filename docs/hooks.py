@@ -12,9 +12,9 @@ def on_pre_build(config) -> None:
     docs = root / "docs"
     env = os.environ.copy()
     env["MPLBACKEND"] = "module://demo_backend"
-    env["PYTHONPATH"] = os.pathsep.join(
-        [str(docs), str(root), env.get("PYTHONPATH", "")]
-    ).rstrip(os.pathsep)
+    env["PYTHONPATH"] = os.pathsep.join([str(docs), str(root), env.get("PYTHONPATH", "")]).rstrip(
+        os.pathsep
+    )
 
     for demo in sorted((root / "demo").glob("*.py")):
         subprocess.run([sys.executable, str(demo)], cwd=root, env=env, check=True)

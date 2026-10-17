@@ -3,8 +3,15 @@ from scatsol.geometry import CylindricalGeometry
 from scatsol.geometry import SphericalGeometry
 from scatsol.typing import FloatArray, ComplexArray, IntArray
 from scipy.special import (
-    h2vp, h1vp, hankel2, hankel1, jv, jvp,
-    spherical_jn, spherical_yn, lpmv,
+    h2vp,
+    h1vp,
+    hankel2,
+    hankel1,
+    jv,
+    jvp,
+    spherical_jn,
+    spherical_yn,
+    lpmv,
 )
 from typing import Annotated
 import numpy as np
@@ -66,18 +73,14 @@ class CylindricalSolution:
             omega_mu = 2 * np.pi * self.frequency * material.mu
             radial_field = np.zeros(rho.size, dtype=np.complex128)
             azimuthal_field = np.zeros(rho.size, dtype=np.complex128)
-            radial_field[nonzero] = -d_e_dphi[nonzero] / (
-                1j * omega_mu * rho[nonzero]
-            )
+            radial_field[nonzero] = -d_e_dphi[nonzero] / (1j * omega_mu * rho[nonzero])
             azimuthal_field[nonzero] = d_e_drho[nonzero] / (1j * omega_mu)
-            h_field[nonzero, 0] = (
-                radial_field[nonzero] * np.cos(phi[nonzero])
-                - azimuthal_field[nonzero] * np.sin(phi[nonzero])
-            )
-            h_field[nonzero, 1] = (
-                radial_field[nonzero] * np.sin(phi[nonzero])
-                + azimuthal_field[nonzero] * np.cos(phi[nonzero])
-            )
+            h_field[nonzero, 0] = radial_field[nonzero] * np.cos(phi[nonzero]) - azimuthal_field[
+                nonzero
+            ] * np.sin(phi[nonzero])
+            h_field[nonzero, 1] = radial_field[nonzero] * np.sin(phi[nonzero]) + azimuthal_field[
+                nonzero
+            ] * np.cos(phi[nonzero])
             at_origin = ~nonzero
             if np.any(at_origin) and nn.size > 1:
                 # Only the n=1 regular term has a nonzero gradient at the axis.
@@ -87,18 +90,14 @@ class CylindricalSolution:
             omega_epsilon = 2 * np.pi * self.frequency * material.epsilon
             radial_field = np.zeros(rho.size, dtype=np.complex128)
             azimuthal_field = np.zeros(rho.size, dtype=np.complex128)
-            radial_field[nonzero] = d_e_dphi[nonzero] / (
-                1j * omega_epsilon * rho[nonzero]
-            )
+            radial_field[nonzero] = d_e_dphi[nonzero] / (1j * omega_epsilon * rho[nonzero])
             azimuthal_field[nonzero] = -d_e_drho[nonzero] / (1j * omega_epsilon)
-            e_field[nonzero, 0] = (
-                radial_field[nonzero] * np.cos(phi[nonzero])
-                - azimuthal_field[nonzero] * np.sin(phi[nonzero])
-            )
-            e_field[nonzero, 1] = (
-                radial_field[nonzero] * np.sin(phi[nonzero])
-                + azimuthal_field[nonzero] * np.cos(phi[nonzero])
-            )
+            e_field[nonzero, 0] = radial_field[nonzero] * np.cos(phi[nonzero]) - azimuthal_field[
+                nonzero
+            ] * np.sin(phi[nonzero])
+            e_field[nonzero, 1] = radial_field[nonzero] * np.sin(phi[nonzero]) + azimuthal_field[
+                nonzero
+            ] * np.cos(phi[nonzero])
             at_origin = ~nonzero
             if np.any(at_origin) and nn.size > 1:
                 e_field[at_origin, 1] = -d_e_drho[at_origin] / (1j * omega_epsilon)
@@ -128,9 +127,7 @@ class CylindricalSolution:
                 radial_derivative = np.zeros_like(radial)
                 active = self.an != 0
                 if np.any(active):
-                    radial[active] = self.an[active, None] * hankel2(
-                        nn[active, None], argument
-                    )
+                    radial[active] = self.an[active, None] * hankel2(nn[active, None], argument)
                     radial_derivative[active] = self.an[active, None] * h2vp(
                         nn[active, None], argument
                     )
@@ -151,9 +148,7 @@ class CylindricalSolution:
                 points[mask], region.material, radial, radial_derivative, amplitudes
             )
             if idx == len(self.geometry.regions) - 1:
-                incident_e, incident_h = self._incident_plane_wave(
-                    points[mask], region.material
-                )
+                incident_e, incident_h = self._incident_plane_wave(points[mask], region.material)
                 e_region += incident_e
                 h_region += incident_h
             e_field[mask] = e_region
@@ -247,9 +242,7 @@ class CylindricalSolver:
                 if i == 0:
                     dcn[:, i] = 1
 
-                re[:, i] = self._calculate_re(
-                    nn, kiai, mi, mip1, dcn[:, i], polarization
-                )
+                re[:, i] = self._calculate_re(nn, kiai, mi, mip1, dcn[:, i], polarization)
                 if i < n_regions - 2:
                     dcn[:, i + 1] = self._calculate_dcn(nn, kip1ai, re[:, i])
 
@@ -296,13 +289,9 @@ class CylindricalSolver:
             for i in range(1, n_regions - 1):
                 mi, mip1 = regions[i].material, regions[i + 1].material
                 ki, kip1 = mi.k(self.frequency), mip1.k(self.frequency)
-                re[:, i] = self._calculate_re(
-                    nn, ki * radii[i], mi, mip1, dcn[:, i], polarization
-                )
+                re[:, i] = self._calculate_re(nn, ki * radii[i], mi, mip1, dcn[:, i], polarization)
                 if i < n_regions - 2:
-                    dcn[:, i + 1] = self._calculate_dcn(
-                        nn, kip1 * radii[i + 1], re[:, i]
-                    )
+                    dcn[:, i + 1] = self._calculate_dcn(nn, kip1 * radii[i + 1], re[:, i])
 
             if n_regions == 2:
                 k_out = regions[-1].material.k(self.frequency)
@@ -328,9 +317,8 @@ class CylindricalSolver:
                         self.frequency
                     )
                     left_argument, right_argument = ki * radii[i], kip1 * radii[i]
-                    numerator = (
-                        cn[:, i + 1] * hankel1(nn, right_argument)
-                        + dn[:, i + 1] * hankel2(nn, right_argument)
+                    numerator = cn[:, i + 1] * hankel1(nn, right_argument) + dn[:, i + 1] * hankel2(
+                        nn, right_argument
                     )
                     denominator = hankel1(nn, left_argument) + dcn[:, i] * hankel2(
                         nn, left_argument
@@ -511,7 +499,9 @@ class SphericalSolution:
             ps[1] = -3.0 * np.cos(theta)
         for idx in range(2, self.n):
             ell = idx + 1
-            ps[idx] = (2 * ell - 1) / (ell - 1) * np.cos(theta) * ps[idx - 1] - ell / (ell - 1) * ps[idx - 2]
+            ps[idx] = (2 * ell - 1) / (ell - 1) * np.cos(theta) * ps[idx - 1] - ell / (
+                ell - 1
+            ) * ps[idx - 2]
         dps = np.zeros_like(p)
         dps[0] = np.cos(theta)
         for ell in range(2, self.n):
@@ -526,11 +516,19 @@ class SphericalSolution:
         lfac = orders * (orders + 1)
         cp, sp = np.cos(phi), np.sin(phi)
         e[:, 0] = cp * invx2[0] / 1j * (lfac[:, None] * radial_e * p).sum(axis=0)
-        e[:, 1] = -cp * invx[0] * (1j * (derivative_e * dps).sum(axis=0) + (radial_m * ps).sum(axis=0))
-        e[:, 2] = sp * invx[0] * (1j * (derivative_e * ps).sum(axis=0) + (radial_m * dps).sum(axis=0))
+        e[:, 1] = (
+            -cp * invx[0] * (1j * (derivative_e * dps).sum(axis=0) + (radial_m * ps).sum(axis=0))
+        )
+        e[:, 2] = (
+            sp * invx[0] * (1j * (derivative_e * ps).sum(axis=0) + (radial_m * dps).sum(axis=0))
+        )
         h[:, 0] = sp * invx2[0] / 1j * (lfac[:, None] * radial_m * p).sum(axis=0)
-        h[:, 1] = -sp * invx[0] * (1j * (derivative_m * dps).sum(axis=0) + (radial_e * ps).sum(axis=0))
-        h[:, 2] = -cp * invx[0] * (1j * (derivative_m * ps).sum(axis=0) + (radial_e * dps).sum(axis=0))
+        h[:, 1] = (
+            -sp * invx[0] * (1j * (derivative_m * dps).sum(axis=0) + (radial_e * ps).sum(axis=0))
+        )
+        h[:, 2] = (
+            -cp * invx[0] * (1j * (derivative_m * ps).sum(axis=0) + (radial_e * dps).sum(axis=0))
+        )
         h /= material.eta
         spherical_points = np.column_stack((r, theta, phi))
         e = self._cartesian(e, spherical_points)
@@ -581,8 +579,14 @@ class SphericalSolution:
                     rm, dm = d[:, 0, None] * j, d[:, 0, None] * jp
                 else:
                     y, yp = _spherical_radial(orders[:, None], arg, "y")
-                    re, de = c[:, 0, None] * j + c[:, 1, None] * y, c[:, 0, None] * jp + c[:, 1, None] * yp
-                    rm, dm = d[:, 0, None] * j + d[:, 1, None] * y, d[:, 0, None] * jp + d[:, 1, None] * yp
+                    re, de = (
+                        c[:, 0, None] * j + c[:, 1, None] * y,
+                        c[:, 0, None] * jp + c[:, 1, None] * yp,
+                    )
+                    rm, dm = (
+                        d[:, 0, None] * j + d[:, 1, None] * y,
+                        d[:, 0, None] * jp + d[:, 1, None] * yp,
+                    )
             ef, hf = self._evaluate(selected_points, material, re, de, rm, dm)
             electric[mask], magnetic[mask] = ef, hf
         return electric, magnetic
@@ -596,17 +600,34 @@ class SphericalSolution:
         sp, cp = np.sin(phi), np.cos(phi)
         e_spherical = np.column_stack((st * cp * phase, ct * cp * phase, -sp * phase))
         h_spherical = np.column_stack(
-            (st * sp * phase / material.eta, ct * sp * phase / material.eta, cp * phase / material.eta)
+            (
+                st * sp * phase / material.eta,
+                ct * sp * phase / material.eta,
+                cp * phase / material.eta,
+            )
         )
         spherical_points = np.column_stack((r, theta, phi))
-        return self._cartesian(e_spherical, spherical_points), self._cartesian(h_spherical, spherical_points)
+        return self._cartesian(e_spherical, spherical_points), self._cartesian(
+            h_spherical, spherical_points
+        )
 
-    def e_x(self, xyz): return self.total_field(xyz)[0][:, 0]
-    def e_y(self, xyz): return self.total_field(xyz)[0][:, 1]
-    def e_z(self, xyz): return self.total_field(xyz)[0][:, 2]
-    def h_x(self, xyz): return self.total_field(xyz)[1][:, 0]
-    def h_y(self, xyz): return self.total_field(xyz)[1][:, 1]
-    def h_z(self, xyz): return self.total_field(xyz)[1][:, 2]
+    def e_x(self, xyz):
+        return self.total_field(xyz)[0][:, 0]
+
+    def e_y(self, xyz):
+        return self.total_field(xyz)[0][:, 1]
+
+    def e_z(self, xyz):
+        return self.total_field(xyz)[0][:, 2]
+
+    def h_x(self, xyz):
+        return self.total_field(xyz)[1][:, 0]
+
+    def h_y(self, xyz):
+        return self.total_field(xyz)[1][:, 1]
+
+    def h_z(self, xyz):
+        return self.total_field(xyz)[1][:, 2]
 
 
 def _cartesian_to_spherical(points):
@@ -728,21 +749,30 @@ class SphericalSolver:
         if len(self.geometry.regions) == 1:
             zeros = np.zeros(n, dtype=np.complex128)
             return SphericalSolution(self.geometry, self.frequency, n, zeros, zeros.copy(), [])
-        sizes = [abs(region.material.k(self.frequency) * region.outer_radius)
-                 for region in self.geometry.regions[:-1] if not region.material.is_pec]
+        sizes = [
+            abs(region.material.k(self.frequency) * region.outer_radius)
+            for region in self.geometry.regions[:-1]
+            if not region.material.is_pec
+        ]
         if sizes:
             xmax = max(sizes)
             n = min(n, int(np.ceil(xmax + 4 * xmax ** (1 / 3) + 2)))
         an = np.zeros(n, dtype=np.complex128)
         bn = np.zeros_like(an)
-        interior = [[np.zeros((n, 2), dtype=np.complex128), np.zeros((n, 2), dtype=np.complex128)]
-                    for _ in self.geometry.regions[:-1]]
+        interior = [
+            [np.zeros((n, 2), dtype=np.complex128), np.zeros((n, 2), dtype=np.complex128)]
+            for _ in self.geometry.regions[:-1]
+        ]
         for idx, order in enumerate(range(1, n + 1)):
             an[idx], ce = self._solve_channel(order, True)
             bn[idx], cm = self._solve_channel(order, False)
             for region_idx in range(len(interior)):
                 interior[region_idx][0][idx] = ce[region_idx]
                 interior[region_idx][1][idx] = cm[region_idx]
-        if not all(np.all(np.isfinite(v)) for v in (an, bn, *[x for pair in interior for x in pair])):
-            raise FloatingPointError("Spherical Mie coefficients are non-finite; reduce n or review the geometry.")
+        if not all(
+            np.all(np.isfinite(v)) for v in (an, bn, *[x for pair in interior for x in pair])
+        ):
+            raise FloatingPointError(
+                "Spherical Mie coefficients are non-finite; reduce n or review the geometry."
+            )
         return SphericalSolution(self.geometry, self.frequency, n, an, bn, interior)

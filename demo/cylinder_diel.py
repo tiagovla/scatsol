@@ -23,9 +23,7 @@ def solve_dielectric_cylinder(polarization=Polarization.TM):
             CylindricalRegion(radius, float("inf"), vacuum),
         ]
     )
-    solution = CylindricalSolver(geometry, frequency=300e6).solve(
-        n=50, polarization=polarization
-    )
+    solution = CylindricalSolver(geometry, frequency=300e6).solve(n=50, polarization=polarization)
     return geometry, solution
 
 
@@ -37,14 +35,21 @@ def plot_dielectric_cylinder(geometry, solutions, extent=3.0, resolution=100):
     fields = [solutions[0].e_z(points).real, solutions[1].h_z(points).real]
     fig, axes = plt.subplots(1, 2, constrained_layout=True, figsize=(10, 4))
     for ax, field, title in zip(axes, fields, (r"$E_z$ - TMz", r"$H_z$ - TEz")):
-        image = ax.tripcolor(
-            points[:, 0], points[:, 1], field, shading="gouraud", vmin=-1, vmax=1
-        )
+        image = ax.tripcolor(points[:, 0], points[:, 1], field, shading="gouraud", vmin=-1, vmax=1)
         fig.colorbar(image, ax=ax)
-        ax.add_patch(plt.Circle((0, 0), geometry.regions[0].outer_radius,
-                                fill=False, color="white", linewidth=1))
-        ax.set(xlabel="x [m]", ylabel="y [m]", title=title, xlim=(-extent, extent),
-               ylim=(-extent, extent), aspect="equal")
+        ax.add_patch(
+            plt.Circle(
+                (0, 0), geometry.regions[0].outer_radius, fill=False, color="white", linewidth=1
+            )
+        )
+        ax.set(
+            xlabel="x [m]",
+            ylabel="y [m]",
+            title=title,
+            xlim=(-extent, extent),
+            ylim=(-extent, extent),
+            aspect="equal",
+        )
         ax.margins(0)
     return fig, axes
 

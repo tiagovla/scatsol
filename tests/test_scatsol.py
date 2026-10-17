@@ -20,9 +20,7 @@ def test_version():
 
 
 def test_vacuum_constants_are_consistent():
-    assert VACUUM_PERMITTIVITY == pytest.approx(
-        1 / (VACUUM_PERMEABILITY * SPEED_OF_LIGHT**2)
-    )
+    assert VACUUM_PERMITTIVITY == pytest.approx(1 / (VACUUM_PERMEABILITY * SPEED_OF_LIGHT**2))
 
 
 def test_homogeneous_vacuum_matches_incident_plane_wave():
