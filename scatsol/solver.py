@@ -199,7 +199,7 @@ class CylindricalSolution:
             h_field[:, 1] = -phase / material.eta
         else:
             h_field[:, 2] = phase
-            e_field[:, 1] = phase / material.eta
+            e_field[:, 1] = material.eta * phase
         return e_field, h_field
 
 
