@@ -1,0 +1,42 @@
+name: Clean old GitHub Pages deployments
+
+on:
+  workflow_run:
+    workflows: [Publish documentation]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  deployments: write
+
+jobs:
+  cleanup:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep only the latest Pages deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployments = await github.paginate(github.rest.repos.listDeployments, {
+              ...context.repo,
+              environment: 'github-pages',
+              per_page: 100,
+            });
+
+            deployments.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+
+            // Keep the current deployment and remove older records.
+            for (const deployment of deployments.slice(1)) {
+              await github.rest.repos.createDeploymentStatus({
+                ...context.repo,
+                deployment_id: deployment.id,
+                state: 'inactive',
+                description: 'Superseded by a newer GitHub Pages deployment.',
+              });
+              await github.rest.repos.deleteDeployment({
+                ...context.repo,
+                deployment_id: deployment.id,
+              });
+              core.info(`Deleted deployment ${deployment.id} (${deployment.ref}).`);
+            }
