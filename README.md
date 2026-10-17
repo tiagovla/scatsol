@@ -112,13 +112,10 @@ uv run python demo/cylinder_diel.py
 uv run python demo/sphere_diel.py
 ```
 
-The [documentation home](docs/index.md) includes the [equations and
-conventions](docs/theory.md), [API reference](docs/components.md), and
-[runnable examples](docs/examples.md). Build the documentation site with:
-
-```bash
-uv run mkdocs build
-```
+The [documentation home](https://tiagovla.github.io/scatsol/) includes the
+[equations and conventions](https://tiagovla.github.io/scatsol/theory/),
+[API reference](https://tiagovla.github.io/scatsol/components/), and
+[runnable examples](https://tiagovla.github.io/scatsol/examples/).
 
 ## Reference
 
