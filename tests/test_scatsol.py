@@ -10,13 +10,8 @@ from scatsol import (
     SphericalGeometry,
     SphericalRegion,
     SphericalSolver,
-    __version__,
 )
 from scatsol.constant import SPEED_OF_LIGHT, VACUUM_PERMEABILITY, VACUUM_PERMITTIVITY
-
-
-def test_version():
-    assert __version__ == "0.2.3"
 
 
 def test_vacuum_constants_are_consistent():
