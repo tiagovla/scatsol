@@ -4,6 +4,7 @@
 [![Docs](https://img.shields.io/badge/docs-available-brightgreen)](https://tiagovla.github.io/scatsol/)
 [![PyPI](https://img.shields.io/badge/PyPI-available-blue)](https://pypi.org/project/scatsol/)
 [![GitHub](https://img.shields.io/badge/GitHub-source-black)](https://github.com/tiagovla/scatsol)
+[![DOI](https://zenodo.org/badge/404905463.svg)](https://doi.org/10.5281/zenodo.23429019)
 
 ScatSol computes time-harmonic electromagnetic scattering from concentric
 cylindrical and spherical regions. It returns complex electric and magnetic

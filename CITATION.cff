@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+title: ScatSol
+authors:
+  - family-names: Amorim
+    given-names: Tiago Vilela Lima
+version: 0.2.4
+doi: 10.5281/zenodo.23429019
+url: https://github.com/tiagovla/scatsol
+repository-code: https://github.com/tiagovla/scatsol
+license: GPL-3.0-or-later
+abstract: ScatSol computes time-harmonic electromagnetic scattering from concentric cylindrical and spherical regions.
