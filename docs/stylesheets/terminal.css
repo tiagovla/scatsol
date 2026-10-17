@@ -45,3 +45,11 @@ body,
 .md-typeset code {
   border-radius: 2px;
 }
+
+.mpld3-embed {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 1em 0;
+  border: 0;
+}

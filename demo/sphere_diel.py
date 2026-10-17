@@ -36,8 +36,8 @@ def plot_xz_field(geometry, solution, extent=3.0, resolution=80):
         ax.add_patch(plt.Circle((0, 0), region.outer_radius, fill=False, color="white"))
     fig.colorbar(image, ax=ax)
     ax.set(
-        xlabel="$x$",
-        ylabel="$z$",
+        xlabel="x [m]",
+        ylabel="z [m]",
         title=r"$\eta_0 H_y$",
         xlim=(-extent, extent),
         ylim=(-extent, extent),

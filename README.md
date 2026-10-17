@@ -2,7 +2,7 @@
 
 ScatSol computes time-harmonic electromagnetic scattering from concentric
 cylindrical and spherical regions. It returns complex electric and magnetic
-fields at points you choose.
+fields at user-specified points.
 
 The cylindrical solver supports TM and TE plane-wave incidence, layered
 materials, and a perfect electric conductor (PEC) core. The spherical solver
@@ -49,8 +49,8 @@ electric, magnetic = solution.total_field(points)
 ```
 
 Points are Cartesian `(x, y, z)` coordinates in an `(N, 3)` array. Field
-components and full fields are complex; use `.real`, `.imag`, or `np.abs(...)`
-for the quantity you want to inspect.
+components and full fields are complex; `.real`, `.imag`, and `np.abs(...)`
+provide access to the real part, imaginary part, or magnitude.
 
 ## Quick start: sphere
 
@@ -88,6 +88,11 @@ conventions](docs/theory.md), [API reference](docs/components.md), and
 ```bash
 uv run mkdocs build
 ```
+
+## Reference
+
+Jin, Jian-Ming. *Theory and Computation of Electromagnetic Fields*. 2nd ed.
+Hoboken, NJ: Wiley-IEEE Press, 2015.
 
 ## License
 

@@ -43,7 +43,7 @@ def plot_dielectric_cylinder(geometry, solutions, extent=3.0, resolution=100):
         fig.colorbar(image, ax=ax)
         ax.add_patch(plt.Circle((0, 0), geometry.regions[0].outer_radius,
                                 fill=False, color="white", linewidth=1))
-        ax.set(xlabel="$x$", ylabel="$y$", title=title, xlim=(-extent, extent),
+        ax.set(xlabel="x [m]", ylabel="y [m]", title=title, xlim=(-extent, extent),
                ylim=(-extent, extent), aspect="equal")
         ax.margins(0)
     return fig, axes

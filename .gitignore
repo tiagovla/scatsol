@@ -3,3 +3,5 @@ __pycache__/
 site/
 dist/
 *.png
+docs/assets/*.html
+docs/assets/*.min.js

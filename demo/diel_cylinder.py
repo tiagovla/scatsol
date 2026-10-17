@@ -38,11 +38,16 @@ def plot_diel_cylinder(geometry, solution, extent=3.0, resolution=100):
     e_z = solution.e_z(points).real
     xy = points[:, :2].T
 
-    fig, ax = plt.subplots(constrained_layout=True, figsize=(6, 6))
-    ax.tripcolor(*xy, e_z, shading="gouraud", vmin=-1, vmax=1)
+    fig, ax = plt.subplots(constrained_layout=True, figsize=(5, 4))
+    image = ax.tripcolor(*xy, e_z, shading="gouraud", vmin=-1, vmax=1)
     for region in geometry.regions[:-1]:
         ax.add_patch(Circle((0, 0), region.outer_radius, fill=False, color="black"))
-    ax.set(xlabel="x [m]", ylabel="y [m]")
+    ax.set(
+        xlabel="x [m]",
+        ylabel="y [m]",
+        title=r"$E_z$ field for a layered dielectric cylinder",
+    )
+    fig.colorbar(image, ax=ax)
     ax.set_aspect("equal")
     ax.set_xlim(-extent, extent)
     ax.set_ylim(-extent, extent)

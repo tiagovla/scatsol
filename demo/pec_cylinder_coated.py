@@ -32,21 +32,22 @@ def plot_pec_cylinder_coated(geometry, solution, extent=3.0, resolution=200):
     points = np.column_stack((x.ravel(), y.ravel(), np.zeros(x.size)))
     if solution.polarization == Polarization.TM:
         field = solution.e_z(points).real
-        component = "E_z"
+        component = r"$E_z$"
     else:
         field = solution.h_z(points).real
-        component = "H_z"
+        component = r"$H_z$"
 
-    fig, ax = plt.subplots(constrained_layout=True, figsize=(6, 6))
-    ax.tripcolor(
+    fig, ax = plt.subplots(constrained_layout=True, figsize=(5, 4))
+    image = ax.tripcolor(
         points[:, 0], points[:, 1], field, shading="gouraud", vmin=-1, vmax=1
     )
+    fig.colorbar(image, ax=ax)
     for region in geometry.regions[:-1]:
         ax.add_patch(Circle((0, 0), region.outer_radius, fill=False, color="black"))
     ax.set(
         xlabel="x [m]",
         ylabel="y [m]",
-        title=f"{solution.polarization.value} scattering by a coated PEC cylinder ({component})",
+        title=f"{solution.polarization.value} scattering by a coated PEC cylinder - {component}",
         xlim=(-extent, extent),
         ylim=(-extent, extent),
         aspect="equal",

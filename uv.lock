@@ -685,6 +685,19 @@ wheels = [
 ]
 
 [[package]]
+name = "mpld3"
+version = "0.5.12"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jinja2" },
+    { name = "matplotlib" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f8/b2/9943f3e0bdf4ff9968b7ac4499152162d8ee8fc8eaa55487339872f86300/mpld3-0.5.12.tar.gz", hash = "sha256:1333e2bca012ea9af3c27801ba36f65bc26540b6fad4c56a903afb19477f2c37", size = 1028433, upload-time = "2025-11-05T18:12:24.183Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5b/69/93b34728cc386efdde0c342f8c680b9187dea7beb7adaf6b58a0713be101/mpld3-0.5.12-py3-none-any.whl", hash = "sha256:bea31799a4041029a906f53f2662bbf1c49903e0c0bc712b412354158ec7cf54", size = 203051, upload-time = "2025-11-05T18:12:22.527Z" },
+]
+
+[[package]]
 name = "mypy-extensions"
 version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1036,6 +1049,7 @@ dev = [
     { name = "mkdocs" },
     { name = "mkdocs-material" },
     { name = "mkdocstrings", extra = ["python"] },
+    { name = "mpld3" },
     { name = "pytest" },
     { name = "pytest-cov" },
 ]
@@ -1054,6 +1068,7 @@ dev = [
     { name = "mkdocs", specifier = ">=1.6.1,<2" },
     { name = "mkdocs-material", specifier = ">=9.7.7" },
     { name = "mkdocstrings", extras = ["python"], specifier = ">=0.24.0" },
+    { name = "mpld3", specifier = ">=0.5.12" },
     { name = "pytest", specifier = ">=7.1.2" },
     { name = "pytest-cov", specifier = ">=3.0.0" },
 ]

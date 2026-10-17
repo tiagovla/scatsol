@@ -25,6 +25,7 @@ dev = [
     "mkdocs>=1.6.1,<2",
     "mkdocstrings[python]>=0.24.0",
     "mkdocs-material>=9.7.7",
+    "mpld3>=0.5.12",
 ]
 
 [tool.uv]
