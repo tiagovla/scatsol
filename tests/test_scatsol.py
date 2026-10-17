@@ -16,7 +16,7 @@ from scatsol.constant import SPEED_OF_LIGHT, VACUUM_PERMEABILITY, VACUUM_PERMITT
 
 
 def test_version():
-    assert __version__ == "0.0.2"
+    assert __version__ == "0.0.3"
 
 
 def test_vacuum_constants_are_consistent():
