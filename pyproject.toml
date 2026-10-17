@@ -1,6 +1,6 @@
 [project]
 name = "scatsol"
-version = "0.2.4"
+version = "0.2.5"
 description = "Electromagnetic Scattering Solutions"
 authors = [{ name = "tiagovla", email = "tiagovla@gmail.com" }]
 license = "GPL-3.0-or-later"
