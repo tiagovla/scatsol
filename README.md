@@ -2,6 +2,8 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/docs-available-brightgreen)](https://tiagovla.github.io/scatsol/)
+[![PyPI](https://img.shields.io/badge/PyPI-available-blue)](https://pypi.org/project/scatsol/)
+[![GitHub](https://img.shields.io/badge/GitHub-source-black)](https://github.com/tiagovla/scatsol)
 
 ScatSol computes time-harmonic electromagnetic scattering from concentric
 cylindrical and spherical regions. It returns complex electric and magnetic
@@ -14,11 +16,37 @@ wave. Materials can have real or complex relative permittivity and permeability.
 
 ## Install
 
-Clone the repository, then install its dependencies with [uv](https://docs.astral.sh/uv/):
+Install the published package from [PyPI](https://pypi.org/project/scatsol/) with pip:
 
 ```bash
+python -m pip install scatsol
+```
+
+<details>
+<summary>Other installation options</summary>
+
+Install directly from the latest [GitHub source](https://github.com/tiagovla/scatsol) with pip or uv:
+
+```bash
+python -m pip install git+https://github.com/tiagovla/scatsol.git
+uv pip install git+https://github.com/tiagovla/scatsol.git
+```
+
+To add the GitHub source as a dependency in a uv project:
+
+```bash
+uv add git+https://github.com/tiagovla/scatsol.git
+```
+
+To work from a local clone, install its dependencies with [uv](https://docs.astral.sh/uv/):
+
+```bash
+git clone https://github.com/tiagovla/scatsol.git
+cd scatsol
 uv sync
 ```
+
+</details>
 
 ## Quick start: cylinder
 
