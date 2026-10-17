@@ -1,5 +1,8 @@
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 from scatsol.region import CylindricalRegion
+
+if TYPE_CHECKING:
+    from scatsol.region import SphericalRegion
 
 
 class CylindricalGeometry:

@@ -1,0 +1,21 @@
+name: Check linting
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Ruff linter
+        uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: ruff-check --all-files
